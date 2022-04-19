@@ -40,7 +40,12 @@ rescale01 <- function(r1) {
 # Bring in Rasters: -----------------------------------------------
 
 r <- raster("Data/original/SOI_10km.tif") 
-p.bear.conf <- raster("data/original/prob_bear_conflict.tif")
+p.bear.conf <- raster("Data/original/prob_bear_conflict.tif")
+grizz.dens <- raster("Data/original/grizz_dens.tif")
+
+
+# Crop and Resample Source Raster: ----------------------------------------
+
 
 
 # Rescale our Raster for Standardization: ---------------------------------
