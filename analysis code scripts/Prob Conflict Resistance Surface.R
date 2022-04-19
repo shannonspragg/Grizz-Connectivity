@@ -46,6 +46,11 @@ grizz.dens <- raster("Data/original/grizz_dens.tif")
 
 # Crop and Resample Source Raster: ----------------------------------------
 
+grizzdens.crop <- raster::crop(grizz.dens, r)  
+
+grizzdens.rsmple <- resample(grizzdens.crop, r, method='bilinear')
+
+grizzdens.soi <- terra::mask(grizzdens.rsmple, r) 
 
 
 # Rescale our Raster for Standardization: ---------------------------------
@@ -65,4 +70,5 @@ plot(p_conflict_resistance, col=plasma(256), axes = TRUE, main = "Probability of
 # Save our Raster: --------------------------------------------------------
   # Write raster (saving both gdrive and local computer):
 writeRaster(p_conflict_resistance, "Data/processed/p_conflict_resistance_layer.tif", overwrite = TRUE)
+writeRaster(grizzdens.soi, "Data/processed/grizz_dens_soi.tif", overwrite = TRUE)
 
