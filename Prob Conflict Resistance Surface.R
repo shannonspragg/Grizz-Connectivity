@@ -37,66 +37,27 @@ rescale01 <- function(r1) {
 }
 
 
-# Bring in Template Raster: -----------------------------------------------
+# Bring in Rasters: -----------------------------------------------
 
-#template raster
-r <- raster("data/template_raster.tif")
-herds <- st_read("data/processed/herd_shapefile_outline.shp")
-# resample the hsi layer to match the extent and resolution of template raster
-hsi <- raster("data/original/SUMMER_HSI_clip/SUMMER_HSI_clip.tif")
-hsi.resample <- resample(hsi, r)
-plot(hsi.resample)
-table(is.na(hsi.resample[]))
-plot(hsi.resample, colNA="red")
-#writeRaster(hsi.resample, "data/processed/hsi_resample_wrongmax.tif", overwrite = TRUE)
-#write this for future use so I won't have to resample again!
-
-# according to Brent (creater of hsi layer) the max value should be 73 NOT 128
-# fix the max value here
-hsi.resample[hsi.resample>73] <- NA
-hsi.resample
-writeRaster(hsi.resample, "data/processed/hsi_resample.tif")
-
-# take the inverse of habitat suitability for resistance
-hsi.resample <- raster("data/processed/hsi_resample.tif")
-plot(hsi.resample)
-plot(st_geometry(herds), add = TRUE)
-hsi.inverse <- 1/hsi.resample
-plot(hsi.inverse)
-table(is.na(hsi.resample[]))
-plot(hsi.resample, colNA="red")
+r <- raster("Data/original/SOI_10km.tif") 
+p.bear.conf <- raster("data/original/prob_bear_conflict.tif")
 
 
 # Rescale our Raster for Standardization: ---------------------------------
   # Rescale to 0-1 for standardization
   # set the NA values to 1 for highest resistance (won't run in CS otherwise)
-hsi.rescale <- rescale01(hsi.inverse)
-hsi.rescale[is.na(hsi.rescale)]=1
-hsi.rescale
-plot(hsi.rescale, col=plasma(256), axes = TRUE, main = "Habitat Suitability Resistance Layer")
-
-# bring in the human modification layer
-hmi <- raster("data/processed/hmi.crop.tif")
-plot(hmi, col=plasma(256), axes = TRUE, main = "Human Modification Layer")
-
-# fuzzy sum approach to combine them from Theobald 2013
-fuzzysum <- function(r1, r2) {
-  rc1.1m <- (1-r1)
-  rc2.1m <- (1-r2)
-  fuz.sum <- 1-(rc1.1m*rc2.1m)
-}
-biophys_fuzsum <- fuzzysum(hsi.rescale, hmi)
-plot(biophys_fuzsum, col=plasma(256), axes = TRUE, main = "HSI+HMI Resistance Layer")
-
+p.conf.rescale <- rescale01(p.bear.conf)
+p.conf.rescale[is.na(p.conf.rescale)]=1
+p.conf.rescale
+plot(p.conf.rescale, col=plasma(256), axes = TRUE, main = "Probability of Bear Conflict Resistance Layer")
 
 
 # Make this a Resistance Surface: -----------------------------------------
-biophys_resistance <- (1+biophys_fuzsum)^10
-plot(biophys_resistance, col=plasma(256), axes = TRUE, main = "HSI+HMI Resistance Layer")
-
+p_conflict_resistance <- (1+p.conf.rescale)^10
+plot(p_conflict_resistance, col=plasma(256), axes = TRUE, main = "Probability of Bear Conflict Resistance Layer")
 
 
 # Save our Raster: --------------------------------------------------------
   # Write raster (saving both gdrive and local computer):
-writeRaster(biophys_resistance, "data/raster_layers/biophys_resistance_layer.tif", overwrite = TRUE)
+writeRaster(p_conflict_resistance, "Data/processed/p_conflict_resistance_layer.tif", overwrite = TRUE)
 
