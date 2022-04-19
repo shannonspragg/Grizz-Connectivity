@@ -22,7 +22,7 @@ options(
 )
 
 
-# Download Wyoming Parcel Data --------------------------------------------
+# Download Original Data --------------------------------------------
 folder_url <- "https://drive.google.com/drive/u/0/folders/1TOBdzYCxFlHDiWAjl094Bp59_DSFa8BK" # rasters and omniscape data
 folder <- drive_get(as_id(folder_url))
 gdrive_files <- drive_ls(folder)
