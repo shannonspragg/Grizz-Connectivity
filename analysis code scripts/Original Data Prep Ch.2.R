@@ -196,10 +196,64 @@ names(animal.prod.wa.counts)[names(animal.prod.wa.counts) == "Value"] <- "Total 
 names(ground.crop.wa.counts)[names(ground.crop.wa.counts) == "Value"] <- "Total Farms in County"
 
 # Join this back to our data as a total column:
-animal.prod.join <- merge(animal.prod.counts, animal.product.farming, by.x = "CCSUID", by.y = "CCSUID") 
-ground.crop.join <- merge(ground.crop.counts, ground.crop.production, by.x = "CCSUID", by.y = "CCSUID") 
+animal.prod.bc.join <- merge(animal.prod.bc.counts, animal.product.farming, by.x = "CCSUID", by.y = "CCSUID") 
+ground.crop.bc.join <- merge(ground.crop.bc.counts, ground.crop.production, by.x = "CCSUID", by.y = "CCSUID") 
+animal.prod.wa.join <- merge(animal.prod.wa.counts, animal.farms.ona, by.x = "County.ANSI", by.y = "County.ANSI") 
+ground.crop.wa.join <- merge(ground.crop.wa.counts, crop.farms.ona, by.x = "County.ANSI", by.y = "County.ANSI") 
 
-animal.prod.sf <- st_as_sf(animal.prod.join)
-ground.crop.sf <- st_as_sf(ground.crop.join)
+animal.prod.bc.sf <- st_as_sf(animal.prod.bc.join)
+ground.crop.bc.sf <- st_as_sf(ground.crop.bc.join)
+animal.prod.wa.sf <- st_as_sf(animal.prod.wa.join)
+ground.crop.wa.sf <- st_as_sf(ground.crop.wa.join)
 
+# Calculate the Density of Farm Types: ------------------------------------
+  # We do so by dividing the count of farms by the overall area of the farm type categories (for our 10km buffered area, but save this to the 50km dataset 
+  # so that we have values on the edge of our 10km zone):
+
+# Calculate our areas for the two objects: 
+animal.prod.bc.sf$AREA_SQM <- st_area(animal.prod.bc.sf)
+ground.crop.bc.sf$AREA_SQM <- st_area(ground.crop.bc.sf)
+animal.prod.wa.sf$AREA_SQM <- st_area(animal.prod.wa.sf)
+ground.crop.wa.sf$AREA_SQM <- st_area(ground.crop.wa.sf)
+
+
+# Make our area units kilometers:
+animal.prod.bc.sf$AREA_SQ_KM <- set_units(animal.prod.bc.sf$AREA_SQM, km^2)
+ground.crop.bc.sf$AREA_SQ_KM <- set_units(ground.crop.bc.sf$AREA_SQM, km^2)
+animal.prod.wa.sf$AREA_SQ_KM <- set_units(animal.prod.wa.sf$AREA_SQM, km^2)
+ground.crop.wa.sf$AREA_SQ_KM <- set_units(ground.crop.wa.sf$AREA_SQM, km^2)
+
+
+# Now we make a new col with our farms per sq km:
+animal.prod.bc.sf$Farms_per_sq_km <- animal.prod.bc.sf$`Total Farms in CCS` / animal.prod.bc.sf$AREA_SQ_KM
+head(animal.prod.bc.sf)
+
+ground.crop.bc.sf$Farms_per_sq_km <- ground.crop.bc.sf$`Total Farms in CCS` / ground.crop.bc.sf$AREA_SQ_KM
+head(ground.crop.bc.sf)
+
+animal.prod.wa.sf$Farms_per_sq_km <- animal.prod.wa.sf$`Total Farms in County` / animal.prod.wa.sf$AREA_SQ_KM
+head(animal.prod.wa.sf)
+
+ground.crop.wa.sf$Farms_per_sq_km <- ground.crop.wa.sf$`Total Farms in County` / ground.crop.wa.sf$AREA_SQ_KM
+head(ground.crop.wa.sf)
+
+# Make this col numeric:
+animal.prod.bc.sf$Farms_per_sq_km <- as.numeric(as.character(animal.prod.bc.sf$Farms_per_sq_km))
+ground.crop.bc.sf$Farms_per_sq_km <- as.numeric(as.character(ground.crop.bc.sf$Farms_per_sq_km))
+animal.prod.wa.sf$Farms_per_sq_km <- as.numeric(as.character(animal.prod.wa.sf$Farms_per_sq_km))
+ground.crop.wa.sf$Farms_per_sq_km <- as.numeric(as.character(ground.crop.wa.sf$Farms_per_sq_km))
+
+
+# Merge these to make ONA animal and crop farms: --------------------------
+
+??st_union
+animal.prod.ona <- st_union(animal.prod.bc.sf, animal.prod.wa.sf)
+ground.crop.prod.ona <- st_union(ground.crop.prod.bc.sf, ground.crop.prod.wa.sf)
+
+
+
+# Save these as .shp's for later:
+st_write(animal.prod.sf,"/Users/shannonspragg/SOI-Grizz/Data/processed/Animal Product Farming.shp")
+
+st_write(ground.crop.sf, "/Users/shannonspragg/SOI-Grizz/Data/processed/Ground Crop Production.shp") 
 
