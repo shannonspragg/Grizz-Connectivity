@@ -272,15 +272,11 @@ names(animal.prod.bc)[names(animal.prod.bc) == "CCSNAME"] <- "NAME"
 names(ground.crop.bc)[names(ground.crop.bc) == "CCSNAME"] <- "NAME"
 
 # Merge these to make ONA animal and crop farms: --------------------------
-
-animal.prod.ona <- st_union(animal.prod.bc.sf, animal.prod.wa.sf)
-ground.crop.prod.ona <- st_union(ground.crop.bc.sf, ground.crop.wa.sf)
-
 animal.prod.ona <- rbind(animal.prod.bc, animal.prod.wa)
 ground.crop.ona <- rbind(ground.crop.bc, ground.crop.wa)
 
 # Save these as .shp's for later:
 st_write(animal.prod.ona,"/Users/shannonspragg/Grizz-Connectivity/Data/processed/ONA Animal Product Farming.shp")
 
-st_write(ground.crop.prod.ona, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/ONA Ground Crop Production.shp") 
+st_write(ground.crop.ona, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/ONA Ground Crop Production.shp") 
 
