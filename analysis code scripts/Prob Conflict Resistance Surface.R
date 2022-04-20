@@ -43,6 +43,7 @@ r <- raster("Data/original/SOI_10km.tif")
 p.bear.conf <- raster("Data/original/prob_bear_conflict.tif")
 grizz.dens <- raster("Data/original/grizz_dens.tif")
 
+# NOTE: need to check p(conflict values so highest resistance is highest p(conflict))
 
 # Crop and Resample Source Raster: ----------------------------------------
 
