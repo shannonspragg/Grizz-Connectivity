@@ -246,14 +246,13 @@ ground.crop.wa.sf$Farms_per_sq_km <- as.numeric(as.character(ground.crop.wa.sf$F
 
 # Merge these to make ONA animal and crop farms: --------------------------
 
-??st_union
 animal.prod.ona <- st_union(animal.prod.bc.sf, animal.prod.wa.sf)
-ground.crop.prod.ona <- st_union(ground.crop.prod.bc.sf, ground.crop.prod.wa.sf)
+ground.crop.prod.ona <- st_union(ground.crop.bc.sf, ground.crop.wa.sf)
 
 
 
 # Save these as .shp's for later:
-st_write(animal.prod.sf,"/Users/shannonspragg/SOI-Grizz/Data/processed/Animal Product Farming.shp")
+st_write(animal.prod.ona,"/Users/shannonspragg/Grizz-Connectivity/Data/processed/ONA Animal Product Farming.shp")
 
-st_write(ground.crop.sf, "/Users/shannonspragg/SOI-Grizz/Data/processed/Ground Crop Production.shp") 
+st_write(ground.crop.prod.ona, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/ONA Ground Crop Production.shp") 
 
