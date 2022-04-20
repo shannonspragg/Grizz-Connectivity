@@ -12,7 +12,6 @@ library(raster)
 library(rgdal)
 library(fasterize)
 library(terra)
-library(stars)
 library(units)
 library(googledrive)
 
@@ -117,14 +116,15 @@ unique(farm.type.bc$North.American.Industry.Classification.System..NAICS.) # The
 bc.farm.2016.ccs<-bc.farm.filter.ccs %>%
   filter(., grepl("2016", bc.farm.filter.ccs$REF_DATE)) # Now there are 344 observations
 
+bc.farm.2016.ccs$CCSUID.crop<- str_sub(bc.farm.2016.ccs$GEO,-6,-2) # Now we have a matching 6 digits
+unique(bc.farm.2016.ccs$CCSUID.crop) #This is a 5 digit code
+
 # Editing CCS Code into new column for join -------------------------------
   # Here we separate out the CCS code into new column for join with CCS .shp:
 bc.ccs$CCSUID.crop<- str_sub(bc.ccs$CCSUID,-5,-1) # Now we have a matching 6 digits
 unique(bc.ccs$CCSUID.crop) #This is a 5 digit code
 str(bc.farm.2016.ccs) # Check the structure before joining
-head(animal.farm.wa) # Check out our WA farm data
-head(crop.farm.wa)
-unique(animal.farm.wa$County.ANSI)
+nique(animal.farm.wa$County.ANSI)
 unique(crop.farm.wa$County)
 unique(wa.county.reproj$COUNTYFP)
 
@@ -164,7 +164,7 @@ crop.farms.ona$Value <- as.integer(crop.farms.ona$Value)
 farm.ona.subset <- subset(farm.ccs.bc.ona, North.American.Industry.Classification.System..NAICS. != "Total number of farms")
 names(farm.ona.subset)[names(farm.ona.subset) == "North.American.Industry.Classification.System..NAICS."] <- "N_A_I_C"
 
-# Condense Farm Types to Animal & Ground Crop Production:
+  # Condense Farm Types to Animal & Ground Crop Production:
 animal.product.farming <- dplyr::filter(farm.ona.subset, N_A_I_C == "Beef cattle ranching and farming, including feedlots [112110]" | N_A_I_C == "Cattle ranching and farming [1121]" 
                                         | N_A_I_C == "Dairy cattle and milk production [112120]" | N_A_I_C == "Hog and pig farming [1122]" | N_A_I_C == "Poultry and egg production [1123]"
                                         | N_A_I_C == "Chicken egg production [112310]" | N_A_I_C == "Broiler and other meat-type chicken production [112320]" | N_A_I_C == "Turkey production [112330]"
@@ -182,7 +182,7 @@ ground.crop.production <- dplyr::filter(farm.ona.subset, N_A_I_C == "Fruit and t
                                         | N_A_I_C == "Other crop farming [1119]" | N_A_I_C == "Tobacco farming [111910]" | N_A_I_C == "Hay farming [111940]" | N_A_I_C == "Fruit and vegetable combination farming [111993]"
                                         | N_A_I_C == "Maple syrup and products production [111994]" | N_A_I_C == "All other miscellaneous crop farming [111999]" )
 
-# Total the counts of these farm categories by CCS region:
+  # Total the counts of these farm categories by CCS region:
 animal.prod.bc.counts <- aggregate(cbind(VALUE) ~ CCSUID, data= animal.product.farming, FUN=sum)
 ground.crop.bc.counts <- aggregate(cbind(VALUE) ~ CCSUID, data= ground.crop.production, FUN=sum)
 
@@ -195,7 +195,7 @@ names(ground.crop.bc.counts)[names(ground.crop.bc.counts) == "VALUE"] <- "Total 
 names(animal.prod.wa.counts)[names(animal.prod.wa.counts) == "Value"] <- "Total Farms in County"
 names(ground.crop.wa.counts)[names(ground.crop.wa.counts) == "Value"] <- "Total Farms in County"
 
-# Join this back to our data as a total column:
+  # Join this back to our data as a total column:
 animal.prod.bc.join <- merge(animal.prod.bc.counts, animal.product.farming, by.x = "CCSUID", by.y = "CCSUID") 
 ground.crop.bc.join <- merge(ground.crop.bc.counts, ground.crop.production, by.x = "CCSUID", by.y = "CCSUID") 
 animal.prod.wa.join <- merge(animal.prod.wa.counts, animal.farms.ona, by.x = "County.ANSI", by.y = "County.ANSI") 
@@ -210,21 +210,21 @@ ground.crop.wa.sf <- st_as_sf(ground.crop.wa.join)
   # We do so by dividing the count of farms by the overall area of the farm type categories (for our 10km buffered area, but save this to the 50km dataset 
   # so that we have values on the edge of our 10km zone):
 
-# Calculate our areas for the two objects: 
+  # Calculate our areas for the two objects: 
 animal.prod.bc.sf$AREA_SQM <- st_area(animal.prod.bc.sf)
 ground.crop.bc.sf$AREA_SQM <- st_area(ground.crop.bc.sf)
 animal.prod.wa.sf$AREA_SQM <- st_area(animal.prod.wa.sf)
 ground.crop.wa.sf$AREA_SQM <- st_area(ground.crop.wa.sf)
 
 
-# Make our area units kilometers:
+  # Make our area units kilometers:
 animal.prod.bc.sf$AREA_SQ_KM <- set_units(animal.prod.bc.sf$AREA_SQM, km^2)
 ground.crop.bc.sf$AREA_SQ_KM <- set_units(ground.crop.bc.sf$AREA_SQM, km^2)
 animal.prod.wa.sf$AREA_SQ_KM <- set_units(animal.prod.wa.sf$AREA_SQM, km^2)
 ground.crop.wa.sf$AREA_SQ_KM <- set_units(ground.crop.wa.sf$AREA_SQM, km^2)
 
 
-# Now we make a new col with our farms per sq km:
+  # Now we make a new col with our farms per sq km:
 animal.prod.bc.sf$Farms_per_sq_km <- animal.prod.bc.sf$`Total Farms in CCS` / animal.prod.bc.sf$AREA_SQ_KM
 head(animal.prod.bc.sf)
 
@@ -237,19 +237,47 @@ head(animal.prod.wa.sf)
 ground.crop.wa.sf$Farms_per_sq_km <- ground.crop.wa.sf$`Total Farms in County` / ground.crop.wa.sf$AREA_SQ_KM
 head(ground.crop.wa.sf)
 
-# Make this col numeric:
+  # Make this col numeric:
 animal.prod.bc.sf$Farms_per_sq_km <- as.numeric(as.character(animal.prod.bc.sf$Farms_per_sq_km))
 ground.crop.bc.sf$Farms_per_sq_km <- as.numeric(as.character(ground.crop.bc.sf$Farms_per_sq_km))
 animal.prod.wa.sf$Farms_per_sq_km <- as.numeric(as.character(animal.prod.wa.sf$Farms_per_sq_km))
 ground.crop.wa.sf$Farms_per_sq_km <- as.numeric(as.character(ground.crop.wa.sf$Farms_per_sq_km))
 
+  # Subset to only the columns we want:
+animal.prod.bc <- animal.prod.bc.sf[, c("CCSUID", "Total Farms in CCS", "GEO", "VALUE", "CCSNAME", "AREA_SQ_KM"
+                                        , "Farms_per_sq_km", "geometry")]
+ground.crop.bc <- ground.crop.bc.sf[, c("CCSUID", "Total Farms in CCS", "GEO", "VALUE", "CCSNAME", "AREA_SQ_KM"
+                                        , "Farms_per_sq_km", "geometry")]
+
+animal.prod.wa <- animal.prod.wa.sf[, c( "County.ANSI", "Total Farms in County", "GEOID", "Value", "NAME", "AREA_SQ_KM"
+                                         , "Farms_per_sq_km", "geometry")]
+                                    
+ground.crop.wa <- ground.crop.wa.sf[, c("County.ANSI", "Total Farms in County", "GEOID", "Value", "NAME", "AREA_SQ_KM"
+                                        , "Farms_per_sq_km", "geometry" )]
+
+  # Need to match column names for rbind:
+names(animal.prod.bc)[names(animal.prod.bc) == "CCSUID"] <- "CensusID"
+names(ground.crop.bc)[names(ground.crop.bc) == "CCSUID"] <- "CensusID"
+names(animal.prod.wa)[names(animal.prod.wa) == "County.ANSI"] <- "CensusID"
+names(ground.crop.wa)[names(ground.crop.wa) == "County.ANSI"] <- "CensusID"
+names(animal.prod.bc)[names(animal.prod.bc) == "Total Farms in CCS"] <- "Total Farms in Census Region"
+names(ground.crop.bc)[names(ground.crop.bc) == "Total Farms in CCS"] <- "Total Farms in Census Region"
+names(animal.prod.wa)[names(animal.prod.wa) == "Total Farms in County"] <- "Total Farms in Census Region"
+names(ground.crop.wa)[names(ground.crop.wa) == "Total Farms in County"] <- "Total Farms in Census Region"
+names(animal.prod.wa)[names(animal.prod.wa) == "GEOID"] <- "GEO"
+names(ground.crop.wa)[names(ground.crop.wa) == "GEOID"] <- "GEO"
+names(animal.prod.wa)[names(animal.prod.wa) == "Value"] <- "VALUE"
+names(ground.crop.wa)[names(ground.crop.wa) == "Value"] <- "VALUE"
+names(animal.prod.bc)[names(animal.prod.bc) == "CCSNAME"] <- "NAME"
+names(ground.crop.bc)[names(ground.crop.bc) == "CCSNAME"] <- "NAME"
 
 # Merge these to make ONA animal and crop farms: --------------------------
 
 animal.prod.ona <- st_union(animal.prod.bc.sf, animal.prod.wa.sf)
 ground.crop.prod.ona <- st_union(ground.crop.bc.sf, ground.crop.wa.sf)
 
-
+animal.prod.ona <- rbind(animal.prod.bc, animal.prod.wa)
+ground.crop.ona <- rbind(ground.crop.bc, ground.crop.wa)
 
 # Save these as .shp's for later:
 st_write(animal.prod.ona,"/Users/shannonspragg/Grizz-Connectivity/Data/processed/ONA Animal Product Farming.shp")
