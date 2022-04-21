@@ -280,3 +280,26 @@ st_write(animal.prod.ona,"/Users/shannonspragg/Grizz-Connectivity/Data/processed
 
 st_write(ground.crop.ona, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/ONA Ground Crop Production.shp") 
 
+
+################################# Prep Grizzly Population Units:
+
+# Check Projections: ------------------------------------------------------
+st_crs(grizzpop.reproj) == st_crs(ona.reproj) #TRUE
+
+# Plot these together to see overlap:
+plot(st_geometry(grizzpop.reproj))
+
+
+# Filter these to just the extant populations: ----------------------------
+
+extant.grizz <- filter(grizzpop.reproj, POP_NAME == "South Chilcotin Ranges" | POP_NAME == "Squamish-Lillooet" | POP_NAME == "Columbia-Shuswap"
+                       | POP_NAME == "Central Monashee" | POP_NAME == "Valhalla" | POP_NAME == "Kettle-Granby" | POP_NAME == "Central Selkirk"
+                       | POP_NAME == "Wells Gray" | POP_NAME == "South Selkirk")
+
+# Plot with our boundary to see overlap/position
+plot(st_geometry(extant.grizz))
+plot(st_geometry(ona.reproj), add=TRUE)
+
+# Save this for later:
+st_write(extent.grizz, "/Users/shannonspragg/SOI-Grizz/Data/processed/Extent Grizzly Pop Units.shp") 
+
