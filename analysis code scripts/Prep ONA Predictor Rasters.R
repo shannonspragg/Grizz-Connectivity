@@ -131,9 +131,8 @@ bhs.reproj <- terra::project(bhs.rast, crs(ona.rast))
   # Biophys Map:
 biophys.reproj <- terra::project(biophys.rast, crs(ona.rast))
 
-crs(soi.rast) == crs(grizz.inc.reproj) #TRUE
-crs(grizz.inc.reproj) == crs(grizz.dens.reproj) #TRUE
-crs(biophys.rast) == crs(hm.dens.reproj) #TRUE
+crs(ona.rast) == crs(grizz.inc.reproj) #TRUE
+crs(bhs.reproj) == crs(biophys.reproj) #TRUE
 
 
   # Crop these Rasters to ONA extant:
@@ -143,12 +142,13 @@ biophys.crop <- terra::crop(biophys.reproj, ona.rast)
   # Expand the grizz_dens extant to include WA:
 bhs.crop <- terra::crop(bhs.reproj, ona.rast)
 
-
+  # Make all other values zero:
+bhs.no.na <- classify(bhs.crop, cbind(NA, 0))
 
 # Resample to match extents and res:
 grizzinc.rsmple <- resample(grizzinc.crop, ona.rast, method='bilinear')
 biophys.rsmple <- resample(biophys.crop, ona.rast, method='bilinear')
-bhs.rsmple <- resample(bhs.crop, ona.rast, method='bilinear')
+bhs.rsmple <- resample(bhs.no.na, ona.rast, method='bilinear')
 
 
 # Plot Check:
@@ -185,9 +185,9 @@ names(bhs.ona)[names(bhs.ona) == "Height"] <- "Bear Habitat Suitability (BHS)"
 
 
 # Save our Cropped Rasters: -----------------------------------------------
-terra::writeRaster(grizzinc.ona, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/grizz_inc_SOI_10km.tif")
-terra::writeRaster(biophys.ona, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/biophys_SOI_10km.tif")
-terra::writeRaster(bhs.ona, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/bhs_SOI_10km.tif")
+terra::writeRaster(grizzinc.ona, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/grizz_inc_ona.tif")
+terra::writeRaster(biophys.ona, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/biophys_ona.tif")
+terra::writeRaster(bhs.ona, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/bhs_ona.tif")
 terra::writeRaster(d2pa.ona, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/dist2pa_ona.tif") # already saved
 terra::writeRaster(d2grizzpop.ona, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/dist2grizz_pop_ona.tif") # already saved
 
