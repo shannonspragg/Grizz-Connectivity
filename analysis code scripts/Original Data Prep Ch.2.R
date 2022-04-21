@@ -14,6 +14,7 @@ library(fasterize)
 library(terra)
 library(units)
 library(googledrive)
+library(stringr)
 
 # Load our Data with GoogleDrive: -----------------------------------------
 options(
@@ -124,12 +125,17 @@ unique(bc.farm.2016.ccs$CCSUID.crop) #This is a 5 digit code
 bc.ccs$CCSUID.crop<- str_sub(bc.ccs$CCSUID,-5,-1) # Now we have a matching 6 digits
 unique(bc.ccs$CCSUID.crop) #This is a 5 digit code
 str(bc.farm.2016.ccs) # Check the structure before joining
-nique(animal.farm.wa$County.ANSI)
-unique(crop.farm.wa$County)
-unique(wa.county.reproj$COUNTYFP)
+unique(animal.farm.wa$County.ANSI)
 
-wa.county.reproj$CountyID<- str_sub(wa.county.reproj$GEOID,4,5) 
+crop.farm.wa$County.ANSI <- str_pad(crop.farm.wa$County.ANSI, 3, side = c("left"), pad = "0")
+animal.farm.wa$County.ANSI <- str_pad(animal.farm.wa$County.ANSI, 3, side = c("left"), pad = "0")
+
+wa.county.reproj$CountyID<- str_sub(wa.county.reproj$GEOID,3,5) 
+
 unique(wa.county.reproj$CountyID) #This is a 3 digit code
+unique(animal.farm.wa$County.ANSI) # Now these match
+unique(crop.farm.wa$County.ANSI)
+
 
 # Joining the CCS with the Farm Type: -------------------------------------
 head(wa.county.reproj) # Check out our WA county data
@@ -146,8 +152,6 @@ wa.crop.sf <- st_as_sf(wa.crop.join)
 
 head(farm.ccs.sf) # Here we have a farm type data frame with Multi-polygon geometry - check!
 head(wa.animal.sf)
-plot(st_geometry(wa.animal.sf)) # plot to check
-
 
 # Here we subset the farm data to ONA, and pull out the total farm counts: ---------------------------------
   # Start by cropping the data down to SOI buffer:
@@ -159,6 +163,9 @@ farm.ccs.bc.ona <- st_intersection(farm.ccs.sf, ona.reproj)
 animal.farms.ona <- st_intersection(wa.animal.sf, ona.reproj) 
 crop.farms.ona <- st_intersection(wa.crop.sf, ona.reproj) 
 crop.farms.ona$Value <- as.integer(crop.farms.ona$Value)
+
+plot(st_geometry(animal.farms.ona)) # plot to check
+plot(st_geometry(crop.farms.ona)) 
 
   # Subset the data - separate total farms out of NAIC:
 farm.ona.subset <- subset(farm.ccs.bc.ona, North.American.Industry.Classification.System..NAICS. != "Total number of farms")
@@ -274,6 +281,10 @@ names(ground.crop.bc)[names(ground.crop.bc) == "CCSNAME"] <- "NAME"
 # Merge these to make ONA animal and crop farms: --------------------------
 animal.prod.ona <- rbind(animal.prod.bc, animal.prod.wa)
 ground.crop.ona <- rbind(ground.crop.bc, ground.crop.wa)
+
+  # Check once more:
+plot(st_geometry(animal.prod.ona))
+plot(st_geometry(ground.crop.ona))
 
 # Save these as .shp's for later:
 st_write(animal.prod.ona,"/Users/shannonspragg/Grizz-Connectivity/Data/processed/ONA Animal Product Farming.shp")
