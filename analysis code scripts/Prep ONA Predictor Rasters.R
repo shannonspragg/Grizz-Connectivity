@@ -107,8 +107,8 @@ plot(dist.grizz.pop.raster)  # Plot our grizz pops
 dist.pa.raster <- conv_unit(dist.pa.raster,"m","km") # There we go
 dist.grizz.pop.raster <- conv_unit(dist.grizz.pop.raster,"m","km")
 
-names(dist.pa.raster)[names(dist.pa.raster) == "OBJECTID"] <- "Distance to Nearest PA (km)"
-names(dist.grizz.pop.raster)[names(dist.grizz.pop.raster) == "OBJECTID"] <- "Distance to Nearest Extent Grizzly Pop (km)"
+names(dist.pa.raster)[names(dist.pa.raster) == "HANDLE"] <- "Distance to Nearest PA (km)"
+names(dist.grizz.pop.raster)[names(dist.grizz.pop.raster) == "HANDLE"] <- "Distance to Nearest Extent Grizzly Pop (km)"
 
 
 ########################################## Combine our GrizzInc WA and BC Rasters:
@@ -176,6 +176,7 @@ d2grizzpop.ona <- terra::mask(dist.grizz.pop.raster, ona.bound.vect)
 plot(biophys.ona)
 plot(bhs.ona)
 plot(d2pa.ona)
+plot(d2grizzpop.ona)
 
 # Fix the column names:
 names(grizzinc.ona)[names(grizzinc.ona) == "grizz.increase.map.fixed"] <- "Support for Grizzly Increase"
@@ -187,7 +188,7 @@ names(bhs.ona)[names(bhs.ona) == "Height"] <- "Bear Habitat Suitability (BHS)"
 terra::writeRaster(grizzinc.ona, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/grizz_inc_SOI_10km.tif")
 terra::writeRaster(biophys.ona, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/biophys_SOI_10km.tif")
 terra::writeRaster(bhs.ona, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/bhs_SOI_10km.tif")
-terra::writeRaster(d2pa.ona, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/dist2pa_SOI_10km.tif")
-terra::writeRaster(d2grizzpop.ona, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/dist2pa_SOI_10km.tif")
+terra::writeRaster(d2pa.ona, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/dist2pa_ona.tif") # already saved
+terra::writeRaster(d2grizzpop.ona, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/dist2grizz_pop_ona.tif") # already saved
 
 
