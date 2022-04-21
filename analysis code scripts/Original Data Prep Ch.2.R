@@ -63,6 +63,7 @@ wa.desig.reproj <- st_transform(wa.desig, st_crs(bc.pas))
 wa.proc.reproj <- st_transform(wa.procs, st_crs(bc.pas))
 grizzpop.reproj <- st_transform(grizz.units, st_crs(bc.pas))
 ona.reproj <- st_transform(ona.bound, st_crs(bc.pas))
+bc.pas.reproj <- st_transform(st_make_valid(bc.pas), st_crs(ona.reproj))
 
 st_crs(ccs.reproj) == st_crs(bc.pas) #TRUE
 st_crs(wa.county.reproj) == st_crs(wa.proc.reproj) #TRUE
@@ -281,9 +282,32 @@ st_write(ground.crop.ona, "/Users/shannonspragg/Grizz-Connectivity/Data/processe
 
 ################################ Combine our Protected Area Datasets:
 
+# Start by Filtering to Gap Status 1 & 2: ------------------------------
+wa.desig.filter <- dplyr::filter(wa.desig.reproj, GAP_Sts == "1" | GAP_Sts == "2" )
+head(wa.desig.filter)
+#wa.proc.filter <- dplyr::filter(wa.desig.reproj, Mang_Name == "NPS" | Mang_Name == "USFS" ) # I don't think we need these
+
+# Crop our PA's to ONA Boundary: ------------------------------------------
+
+bc.ona.pas <- st_intersection(bc.pas.reproj, ona.reproj) 
+wa.ona.pas <- st_intersection(wa.desig.filter, ona.reproj) 
+
+# Subset only the columns we need: ----------------------------------------
+wa.pas <- wa.ona.pas[, c("Unit_Nm", "d_Des_Tp", "Mang_Type", "geometry" )]
+bc.pa <- bc.ona.pas[, c("UNIT_NAME", "UNIT_TYPE", "TYPE", "geometry" )]
+
+names(wa.pas)[names(wa.pas) == "Unit_Nm"] <- "UNIT_NAME"
+names(wa.pas)[names(wa.pas) == "d_Des_Tp"] <- "UNIT_TYPE"
+names(wa.pas)[names(wa.pas) == "Mang_Type"] <- "TYPE"
 
 
+# Join the WA and BC PAs Data: -------------------------------------------------
+ona.pas <- rbind(bc.pa, wa.pas)
 
+  # Check this:
+plot(st_geometry(ona.pas))
+
+st_write(ona.pas, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/ona_PAs.shp") 
 
 
 ################################# Prep Grizzly Population Units:
