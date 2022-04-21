@@ -53,8 +53,7 @@ grizz.inc.bc <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/original/griz
 # grizz.inc.wa <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/original/grizz.increase.map.fixed.tif") #  the proportion of people within a census that 
 
   # ONA Territory:
-ona.bound <- st_read("/Users/shannonspragg/Grizz-Connectivity/Data/original/ONA_TerritoryBound.shp") #  the proportion of people within a census that 
-
+ona.bound <- st_read("/Users/shannonspragg/Grizz-Connectivity/Data/original/ONA_TerritoryBound.shp") 
 
 # Reproject & Prep ONA Boundary -------------------------------------------
   # We want to match our data to BC Albers
@@ -280,6 +279,12 @@ st_write(animal.prod.ona,"/Users/shannonspragg/Grizz-Connectivity/Data/processed
 
 st_write(ground.crop.ona, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/ONA Ground Crop Production.shp") 
 
+################################ Combine our Protected Area Datasets:
+
+
+
+
+
 
 ################################# Prep Grizzly Population Units:
 
@@ -301,5 +306,6 @@ plot(st_geometry(extant.grizz))
 plot(st_geometry(ona.reproj), add=TRUE)
 
 # Save this for later:
-st_write(extent.grizz, "/Users/shannonspragg/SOI-Grizz/Data/processed/Extent Grizzly Pop Units.shp") 
+st_write(extant.grizz, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/Extent Grizzly Pop Units.shp") 
+
 
