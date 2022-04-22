@@ -112,7 +112,9 @@ griz.ext.inv <- (griz.ext.nozero)^-1
 biophys.hii <- hii.rescale + rough.rescale
 biophys.hmi <- hmi.rescale + rough.rescale
 
-biophys.combined <- hii.rescale + griz.ext.invert + rough.rescale
+biophys.hii.combined <- hii.rescale + griz.ext.invert + rough.rescale
+biophys.hmi.combined <- hmi.rescale + griz.ext.invert + rough.rescale
+
 #social.biophys <- hii.rescale + griz.ext.invert + rough.rescale + griz.resist.1m
 
   # Mask to ONA:
@@ -128,6 +130,7 @@ writeRaster(griz.ext, filename=here("data/processed/griz_source.tif"), overwrite
 writeRaster(griz.ext.invert, filename=here("data/processed/griz_resist.tif"), overwrite=TRUE)
 writeRaster(griz.ext.inv, filename=here("data/processed/griz_resist_recip.tif"), overwrite=TRUE)
 
-writeRaster(biophys.combined, filename=here("data/processed/bio_combined_resist.tif"), overwrite=TRUE)
+writeRaster(biophys.hii.combined, filename=here("data/processed/bio_combined_hii_resist.tif"), overwrite=TRUE)
+writeRaster(biophys.hmi.combined, filename=here("data/processed/bio_combined_hmi_resist.tif"), overwrite=TRUE)
 writeRaster(biophys.hii, filename=here("data/processed/biophys_hii_resist.tif"), overwrite=TRUE)
 writeRaster(biophys.hmi, filename=here("data/processed/biophys_hmi_resist.tif"), overwrite=TRUE)
