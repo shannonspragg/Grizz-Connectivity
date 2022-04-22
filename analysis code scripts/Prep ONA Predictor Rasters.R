@@ -19,7 +19,7 @@ ground.crop.ona <- st_read("/Users/shannonspragg/Grizz-Connectivity/Data/process
 
   # Grizzinc:  UPDATE THIS WITH NEW DATA
 grizz.inc.bc <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/original/grizz.increase.map.fixed.tif") #  the proportion of people within a census that 
-# grizz.inc.wa <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/original/grizz.increase.map.fixed.tif") 
+grizz.inc.wa <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/original/griz.increase.wa.tif") 
 
   # Bear Density - Bear Habitat Suitability (BHS):
 bhs.rast <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/original/grizz_dens.tif")
@@ -115,28 +115,31 @@ names(dist.grizz.pop.raster)[names(dist.grizz.pop.raster) == "HANDLE"] <- "Dista
 
 
 # Check projections: ------------------------------------------------------
+# GrizzInc Map:
+grizz.inc.wa.reproj <- terra::project(grizz.inc.wa, crs(ona.rast))  
+grizz.inc.bc.reproj <- terra::project(grizz.inc.bc, crs(ona.rast))  
 
 
+# Resample to match: ------------------------------------------------------
+grizzinc.bc.rsmple <- resample(grizz.inc.bc.reproj, ona.rast, method='bilinear')
+grizzinc.wa.rsmple <- resample(grizz.inc.wa.reproj, ona.rast, method='bilinear')
 
-# Mosaic our BC and WA rasters: -----------------------------------------------------
 
-
+# Merge our BC and WA rasters: -----------------------------------------------------
+grizz.inc.comb <- terra::merge(grizzinc.bc.rsmple, grizzinc.wa.rsmple)
 
 ######################################### Check all our Rasters:
 # Check Projections: ------------------------------------------------------
-  # GrizzInc Map:
-grizz.inc.reproj <- terra::project(grizz.inc.ona, crs(ona.rast))  
-  # Bear Density (BHS) Estimate:
+   # Bear Density (BHS) Estimate:
 bhs.reproj <- terra::project(bhs.rast, crs(ona.rast))
   # Biophys Map:
 biophys.reproj <- terra::project(biophys.rast, crs(ona.rast))
 
-crs(ona.rast) == crs(grizz.inc.reproj) #TRUE
+crs(ona.rast) == crs(grizz.inc.comb) #TRUE
 crs(bhs.reproj) == crs(biophys.reproj) #TRUE
 
 
   # Crop these Rasters to ONA extant:
-grizzinc.crop <- terra::crop(grizz.inc.reproj, ona.rast)  
 biophys.crop <- terra::crop(biophys.reproj, ona.rast)
 
   # Expand the grizz_dens extant to include WA:
@@ -146,7 +149,6 @@ bhs.crop <- terra::crop(bhs.reproj, ona.rast)
 bhs.no.na <- classify(bhs.crop, cbind(NA, 0))
 
 # Resample to match extents and res:
-grizzinc.rsmple <- resample(grizzinc.crop, ona.rast, method='bilinear')
 biophys.rsmple <- resample(biophys.crop, ona.rast, method='bilinear')
 bhs.rsmple <- resample(bhs.no.na, ona.rast, method='bilinear')
 
@@ -154,7 +156,7 @@ bhs.rsmple <- resample(bhs.no.na, ona.rast, method='bilinear')
 # Plot Check:
 ona.bound.vect <- vect(ona.bound.reproj)
 
-plot(grizzinc.rsmple)
+plot(grizz.inc.comb)
 plot(ona.bound.vect, add=TRUE)
 
 plot(biophys.rsmple)
@@ -166,13 +168,13 @@ plot(ona.bound.vect, add=TRUE)
 
 # Cut these down to the SOI Boundary: -------------------------------------
 
-grizzinc.ona <- terra::mask(grizzinc.rsmple, ona.bound.vect) 
+grizzinc.ona <- terra::mask(grizz.inc.comb, ona.bound.vect) 
 biophys.ona <- terra::mask(biophys.rsmple, ona.bound.vect) 
 bhs.ona <- terra::mask(bhs.rsmple, ona.bound.vect) 
 d2pa.ona <- terra::mask(dist.pa.raster, ona.bound.vect) 
 d2grizzpop.ona <- terra::mask(dist.grizz.pop.raster, ona.bound.vect) 
 
-
+plot(grizzinc.ona)
 plot(biophys.ona)
 plot(bhs.ona)
 plot(d2pa.ona)
