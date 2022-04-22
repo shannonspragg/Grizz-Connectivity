@@ -116,8 +116,11 @@ names(dist.grizz.pop.raster)[names(dist.grizz.pop.raster) == "HANDLE"] <- "Dista
 bhs.reproj <- terra::project(bhs.rast, crs(ona.rast))
   # Biophys Map:
 biophys.reproj <- terra::project(biophys.rast, crs(ona.rast))
+  # Grizzinc:
+grizzinc.reproj <- terra::project(grizz.inc.comb, crs(ona.rast))
 
-crs(ona.rast) == crs(grizz.inc.comb) #TRUE
+
+crs(ona.rast) == crs(grizzinc.reproj) #TRUE
 crs(bhs.reproj) == crs(biophys.reproj) #TRUE
 
 
@@ -133,6 +136,7 @@ bhs.no.na <- classify(bhs.crop, cbind(NA, 0))
 # Resample to match extents and res:
 biophys.rsmple <- resample(biophys.crop, ona.rast, method='bilinear')
 bhs.rsmple <- resample(bhs.no.na, ona.rast, method='bilinear')
+grizzinc.comb.rsmple <- resample(grizz.inc.comb, ona.rast, method='bilinear')
 
 
 # Plot Check:

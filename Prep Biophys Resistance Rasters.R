@@ -18,7 +18,7 @@ library("sp")
 ona_bdry <- st_read(here("/Users/shannonspragg/Grizz-Connectivity/Data/original/ONA_TerritoryBound.shp")) 
 griz_dens <- rast(here("/Users/shannonspragg/Grizz-Connectivity/Data/original/grizz_dens.tif"))
 hii <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/original/hii_n_amer/")
-hmi <- rast("/Users/shannonspragg/Google Drive/My Drive/Data/Original Data/Global_HII_NAmerica/hii_n_amer/")
+hmi <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/original/gHMv1_300m_2017_static/gHMv1_300m_2017_static-0000000000-0000000000.tif")
 
   # Obtain the elevation values for CAN and US, merge them together
 elev.can <- rast(raster::getData('alt', country = 'CAN'))
@@ -43,14 +43,14 @@ grizz.inc.bc.reproj <- terra::project(grizz.inc.bc, crs(ona_proj.vec))
 
 
 # Resample to match: ------------------------------------------------------
-grizzinc.bc.rsmple <- resample(grizz.inc.bc.reproj, ona.rast, method='bilinear')
-grizzinc.wa.rsmple <- resample(grizz.inc.wa.reproj, ona.rast, method='bilinear')
+grizzinc.bc.rsmple <- resample(grizz.inc.bc.reproj, griz_dens, method='bilinear')
+grizzinc.wa.rsmple <- resample(grizz.inc.wa.reproj, griz_dens, method='bilinear')
 
 
 # Merge our BC and WA rasters: -----------------------------------------------------
 grizz.inc.comb <- terra::merge(grizzinc.bc.rsmple, grizzinc.wa.rsmple)
 
-grizz_resist <- grizz.inc.comb
+griz.resist <- grizz.inc.comb
 
 # Prep Other Rasters: -----------------------------------------------------
 
@@ -123,6 +123,7 @@ biophys.comb.ona <- terra::mask(biophys.combined, ona_proj.vec)
 
 writeRaster(grizz.inc.comb, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/grizz_inc_comb.tif")
 writeRaster(hii.rescale, filename=here("data/processed/hii_resist.tif"), overwrite=TRUE)
+writeRaster(hmi.rescale, filename=here("data/processed/hmi_resist.tif"), overwrite=TRUE)
 writeRaster(griz.ext, filename=here("data/processed/griz_source.tif"), overwrite=TRUE)
 writeRaster(griz.ext.invert, filename=here("data/processed/griz_resist.tif"), overwrite=TRUE)
 writeRaster(griz.ext.inv, filename=here("data/processed/griz_resist_recip.tif"), overwrite=TRUE)
