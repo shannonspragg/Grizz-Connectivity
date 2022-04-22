@@ -17,9 +17,8 @@ library(measurements)
 animal.prod.ona <- st_read("/Users/shannonspragg/Grizz-Connectivity/Data/processed/ONA Animal Product Farming.shp")
 ground.crop.ona <- st_read("/Users/shannonspragg/Grizz-Connectivity/Data/processed/ONA Ground Crop Production.shp")
 
-  # Grizzinc:  UPDATE THIS WITH NEW DATA
-grizz.inc.bc <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/original/grizz.increase.map.fixed.tif") #  the proportion of people within a census that 
-grizz.inc.wa <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/original/griz.increase.wa.tif") 
+  # Grizzinc: 
+grizz.inc.comb <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/processed/grizz.inc.combtif") #  the proportion of people within a census that 
 
   # Bear Density - Bear Habitat Suitability (BHS):
 bhs.rast <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/original/grizz_dens.tif")
@@ -111,24 +110,7 @@ names(dist.pa.raster)[names(dist.pa.raster) == "HANDLE"] <- "Distance to Nearest
 names(dist.grizz.pop.raster)[names(dist.grizz.pop.raster) == "HANDLE"] <- "Distance to Nearest Extent Grizzly Pop (km)"
 
 
-########################################## Combine our GrizzInc WA and BC Rasters:
-
-
-# Check projections: ------------------------------------------------------
-# GrizzInc Map:
-grizz.inc.wa.reproj <- terra::project(grizz.inc.wa, crs(ona.rast))  
-grizz.inc.bc.reproj <- terra::project(grizz.inc.bc, crs(ona.rast))  
-
-
-# Resample to match: ------------------------------------------------------
-grizzinc.bc.rsmple <- resample(grizz.inc.bc.reproj, ona.rast, method='bilinear')
-grizzinc.wa.rsmple <- resample(grizz.inc.wa.reproj, ona.rast, method='bilinear')
-
-
-# Merge our BC and WA rasters: -----------------------------------------------------
-grizz.inc.comb <- terra::merge(grizzinc.bc.rsmple, grizzinc.wa.rsmple)
-
-######################################### Check all our Rasters:
+######################################## Check all our Rasters:
 # Check Projections: ------------------------------------------------------
    # Bear Density (BHS) Estimate:
 bhs.reproj <- terra::project(bhs.rast, crs(ona.rast))

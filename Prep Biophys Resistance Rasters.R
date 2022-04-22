@@ -1,8 +1,9 @@
-install.packages("sf")
-install.packages("raster")
-install.packages("sp")
-install.packages("terra")
-install.packages("here")
+# Prepping Biophys Resistance Rasters: ------------------------------------
+  ## This is our second script, where we prep the biophysical raster input for our omniscape model, as well as
+  # our grizz increase raster for the next script.
+
+
+# Load Packages: ----------------------------------------------------------
 library(here)
 library(terra)
 library(sf)
@@ -11,24 +12,47 @@ library(rgdal)
 library(raster)
 library("sp")
 
-#Creating the raster file objects pulled down from the data folder
+
+# Bring in Data: ----------------------------------------------------------
+  #Creating the raster file objects pulled down from the data folder
 ona_bdry <- st_read(here("/Users/shannonspragg/Grizz-Connectivity/Data/original/ONA_TerritoryBound.shp")) 
 griz_dens <- rast(here("/Users/shannonspragg/Grizz-Connectivity/Data/original/grizz_dens.tif"))
-hii <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/original/")
+hii <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/original/hii_n_amer/")
 hmi <- rast("/Users/shannonspragg/Google Drive/My Drive/Data/Original Data/Global_HII_NAmerica/hii_n_amer/")
 
-# Obtain the elevation values for CAN and US, merge them together
+  # Obtain the elevation values for CAN and US, merge them together
 elev.can <- rast(raster::getData('alt', country = 'CAN'))
 elev.us <- rast(raster::getData('alt', country = 'USA')[[1]])
 elev <- mosaic(elev.can, elev.us)
 
-# Import the grizzly resistance file
-griz.resist <- rast("/Users/mattwilliamson/Analyses/WildlifeGovernance/Data/Working/griz_inc.tif")
+  # Import the grizzly resistance file
+grizz.inc.bc <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/original/grizz.increase.map.fixed.tif") #  the proportion of people within a census that 
+grizz.inc.wa <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/original/griz.increase.wa.tif") 
 
-# Reproject the ONA shapefile boundary
+
+  # Reproject the ONA shapefile boundary
 ona_proj.sp <- ona_bdry %>% st_transform(., crs(griz_dens)) %>% st_buffer(., dist=5000) %>% as(., "Spatial")
 ona_proj.vec <- vect(ona_proj.sp)
 #griz_crop <- crop(griz_dens, ona_proj.sp)
+
+
+# Prep Grizzinc Raster: ------------------------------------------------------
+  # GrizzInc Map:
+grizz.inc.wa.reproj <- terra::project(grizz.inc.wa, crs(ona_proj.vec))  
+grizz.inc.bc.reproj <- terra::project(grizz.inc.bc, crs(ona_proj.vec))  
+
+
+# Resample to match: ------------------------------------------------------
+grizzinc.bc.rsmple <- resample(grizz.inc.bc.reproj, ona.rast, method='bilinear')
+grizzinc.wa.rsmple <- resample(grizz.inc.wa.reproj, ona.rast, method='bilinear')
+
+
+# Merge our BC and WA rasters: -----------------------------------------------------
+grizz.inc.comb <- terra::merge(grizzinc.bc.rsmple, grizzinc.wa.rsmple)
+
+grizz_resist <- grizz.inc.comb
+
+# Prep Other Rasters: -----------------------------------------------------
 
   # Expand grizz_dens extent:
 griz.ext <- terra::extend(griz_dens, ona_proj.vec, filename=here("data/processed/griz_ext.tif"), overwrite=TRUE)
@@ -91,10 +115,18 @@ biophys.hmi <- hmi.rescale + rough.rescale
 biophys.combined <- hii.rescale + griz.ext.invert + rough.rescale
 #social.biophys <- hii.rescale + griz.ext.invert + rough.rescale + griz.resist.1m
 
+  # Mask to ONA:
+biophys.hii.ona <- terra::mask(biophys.hii, ona_proj.vec) 
+biophys.hmi.ona <- terra::mask(biophys.hmi, ona_proj.vec) 
 
+biophys.comb.ona <- terra::mask(biophys.combined, ona_proj.vec)
+
+writeRaster(grizz.inc.comb, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/grizz_inc_comb.tif")
 writeRaster(hii.rescale, filename=here("data/processed/hii_resist.tif"), overwrite=TRUE)
 writeRaster(griz.ext, filename=here("data/processed/griz_source.tif"), overwrite=TRUE)
 writeRaster(griz.ext.invert, filename=here("data/processed/griz_resist.tif"), overwrite=TRUE)
 writeRaster(griz.ext.inv, filename=here("data/processed/griz_resist_recip.tif"), overwrite=TRUE)
-writeRaster(biophys.combined, filename=here("data/processed/combined_resist.tif"), overwrite=TRUE)
-writeRaster(social.biophys, filename=here("data/processed/sociobio_resist.tif"), overwrite=TRUE)
+
+writeRaster(biophys.combined, filename=here("data/processed/bio_combined_resist.tif"), overwrite=TRUE)
+writeRaster(biophys.hii, filename=here("data/processed/biophys_hii_resist.tif"), overwrite=TRUE)
+writeRaster(biophys.hmi, filename=here("data/processed/biophys_hmi_resist.tif"), overwrite=TRUE)
