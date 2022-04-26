@@ -117,7 +117,7 @@ griz.ext.nozero[griz.ext.nozero==0] <- 0.0000000001
 griz.ext.inv <- (griz.ext.nozero)^-1
 
 
-  # Make our Biophys & SocialBiophys Layers:
+  # Make our Biophys Resiatance:
 biophys.hii <- hii.rescale + rough.rescale
 biophys.hmi <- hmi.proj + rough.rescale
 biophys.hmi[biophys.hmi > 1] <- 2
