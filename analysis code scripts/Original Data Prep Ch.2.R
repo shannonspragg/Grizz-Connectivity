@@ -291,6 +291,8 @@ st_write(animal.prod.ona,"/Users/shannonspragg/Grizz-Connectivity/Data/processed
 
 st_write(ground.crop.ona, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/ONA Ground Crop Production.shp") 
 
+st_write(animal.prod.ona,"/Users/shannonspragg/Grizz-Connectivity/Data/processed/ONA Census Districts.shp")
+
 ################################ Combine our Protected Area Datasets:
 
 # Start by Filtering to Gap Status 1 & 2: ------------------------------
