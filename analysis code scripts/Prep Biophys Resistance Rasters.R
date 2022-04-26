@@ -11,7 +11,9 @@ library(here)
 library(rgdal)
 library(raster)
 library("sp")
-
+library(ggmap)
+library(maptools)
+library(viridis)
 
 # Bring in Data: ----------------------------------------------------------
   #Creating the raster file objects pulled down from the data folder
@@ -34,6 +36,12 @@ grizz.inc.wa <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/original/griz
 ona_proj.sp <- ona_bdry %>% st_transform(., crs(griz_dens)) %>% st_buffer(., dist=5000) %>% as(., "Spatial")
 ona_proj.vec <- vect(ona_proj.sp)
 #griz_crop <- crop(griz_dens, ona_proj.sp)
+
+
+# Create Rescale Function: ------------------------------------------------
+rescale01 <- function(r1) {
+  r.rescale <- (r1 - cellStats(r1, min))/(cellStats(r1, max) - cellStats(r1, min))
+}
 
 
 # Prep Grizzinc Raster: ------------------------------------------------------
@@ -86,6 +94,7 @@ hii.rescale[is.nan(hii.rescale)] <- 1
 
 # Rescale HII:
 hmi.rescale <- hmi.crop / 65536
+hmi.proj <- terra::project(hmi.rescale, griz.ext, method="bilinear")
 
   # Project grizz resistance:
 griz.resist.proj <- terra::project(griz.resist, griz.ext, method="bilinear")
@@ -96,9 +105,13 @@ griz.resist.1m[is.nan(griz.resist.1m)] <- 1
   # Scale Grizz Extents:
 griz.ext.min <-global(griz.ext, "min", na.rm=TRUE)[1,]
 griz.ext.max <- global(griz.ext, "max", na.rm=TRUE)[1,] 
+griz.rescale <- (griz.ext - griz.ext.min) / (griz.ext.max - griz.ext.min)
+griz.rescale[griz.rescale == 0] <- 0.000000001
+griz.rescale[is.nan(griz.rescale)] <- 1
+
+  # Invert raster:
 griz.ext.invert <- ((griz.ext - griz.ext.max)*-1) + griz.ext.min
 griz.ext.invert[griz.ext.invert == 0] <- 0.000000001
-
 griz.ext.nozero <- griz.ext
 griz.ext.nozero[griz.ext.nozero==0] <- 0.0000000001
 griz.ext.inv <- (griz.ext.nozero)^-1
@@ -106,14 +119,27 @@ griz.ext.inv <- (griz.ext.nozero)^-1
 
   # Make our Biophys & SocialBiophys Layers:
 biophys.hii <- hii.rescale + rough.rescale
-biophys.hmi <- hmi.rescale + rough.rescale
+biophys.hmi <- hmi.proj + rough.rescale
 biophys.hmi[biophys.hmi > 1] <- 2
 
-biophys.hii.combined <- hii.rescale + griz.ext.invert + rough.rescale
-biophys.hmi.combined <- hmi.rescale + griz.ext.invert + rough.rescale
-biophys.hmi.combined[biophys.hmi.combined > 1.3] <- 2
 
-#social.biophys <- hii.rescale + griz.ext.invert + rough.rescale + griz.resist.1m
+  # Fuzzy sum approach to combine them from Theobald 2013:
+fuzzysum <- function(r1, r2) {
+  rc1.1m <- (1-r1)
+  rc2.1m <- (1-r2)
+  fuz.sum <- 1-(rc1.1m*rc2.1m)
+}
+biophys_fuzsum <- fuzzysum(griz.rescale, hmi.proj)
+plot(biophys_fuzsum, col=plasma(256), axes = TRUE, main = "BHS+HMI Resistance Layer")
+
+  # Make into resistance surface
+biophys_comb_resistance <- (1+biophys_fuzsum)^10
+plot(biophys_comb_resistance, col=plasma(256), axes = TRUE, main = "BHS+HMI Resistance Layer")
+
+
+biophys.hii.combined <- hii.rescale + griz.ext.inv + rough.rescale
+biophys.hmi.combined <- hmi.rescale + griz.ext.inv + rough.rescale
+
 
   # Mask to ONA:
 biophys.hii.ona <- terra::mask(biophys.hii, ona_proj.vec) 
@@ -130,5 +156,7 @@ writeRaster(griz.ext.inv, filename=here("data/processed/griz_resist_recip.tif"),
 
 writeRaster(biophys.hii.combined, filename=here("data/processed/bio_combined_hii_resist.tif"), overwrite=TRUE)
 writeRaster(biophys.hmi.combined, filename=here("data/processed/bio_combined_hmi_resist.tif"), overwrite=TRUE)
+writeRaster(biophys_comb_resistance, "data/raster_layers/biophys_comb_resistance_layer.tif", overwrite = TRUE)
+
 writeRaster(biophys.hii, filename=here("data/processed/biophys_hii_resist.tif"), overwrite=TRUE)
 writeRaster(biophys.hmi, filename=here("data/processed/biophys_hmi_resist.tif"), overwrite=TRUE)
