@@ -25,6 +25,7 @@ bhs.rast <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/original/grizz_de
 
   # Biophysical Current Map (Cumulative current flow shows the total current for each landscape pixel):
 biophys.rast <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/original/biophys_cum_currmap.tif") 
+biophys.norm.rast <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/original/biophys_normalized_cum_currmap.tif") 
 
   # SOI Region for plotting:
 ona.bound <- st_read("/Users/shannonspragg/Grizz-Connectivity/Data/original/ONA_TerritoryBound.shp") 
@@ -116,6 +117,8 @@ names(dist.grizz.pop.raster)[names(dist.grizz.pop.raster) == "HANDLE"] <- "Dista
 bhs.reproj <- terra::project(bhs.rast, crs(ona.rast))
   # Biophys Map:
 biophys.reproj <- terra::project(biophys.rast, crs(ona.rast))
+biophys.nrom.reproj <- terra::project(biophys.norm.rast, crs(ona.rast))
+
   # Grizzinc:
 grizzinc.reproj <- terra::project(grizz.inc.comb, crs(ona.rast))
 
@@ -126,6 +129,7 @@ crs(bhs.reproj) == crs(biophys.reproj) #TRUE
 
   # Crop these Rasters to ONA extant:
 biophys.crop <- terra::crop(biophys.reproj, ona.rast)
+biophys.norm.crop <- terra::crop(biophys.nrom.reproj, ona.rast)
 
   # Expand the grizz_dens extant to include WA:
 bhs.crop <- terra::crop(bhs.reproj, ona.rast)
@@ -135,6 +139,9 @@ bhs.no.na <- classify(bhs.crop, cbind(NA, 0))
 
 # Resample to match extents and res:
 biophys.rsmple <- resample(biophys.crop, ona.rast, method='bilinear')
+biophys.norm.rsmple <- resample(biophys.norm.crop, ona.rast, method='bilinear')
+
+
 bhs.rsmple <- resample(bhs.no.na, ona.rast, method='bilinear')
 grizzinc.comb.rsmple <- resample(grizz.inc.comb, ona.rast, method='bilinear')
 
@@ -156,6 +163,9 @@ plot(ona.bound.vect, add=TRUE)
 
 grizzinc.ona <- terra::mask(grizz.inc.comb, ona.bound.vect) 
 biophys.ona <- terra::mask(biophys.rsmple, ona.bound.vect) 
+biophys.norm.ona <- terra::mask(biophys.norm.rsmple, ona.bound.vect) 
+
+
 bhs.ona <- terra::mask(bhs.rsmple, ona.bound.vect) 
 d2pa.ona <- terra::mask(dist.pa.raster, ona.bound.vect) 
 d2grizzpop.ona <- terra::mask(dist.grizz.pop.raster, ona.bound.vect) 
@@ -169,12 +179,17 @@ plot(d2grizzpop.ona)
 # Fix the column names:
 names(grizzinc.ona)[names(grizzinc.ona) == "grizz.increase.map.fixed"] <- "Support for Grizzly Increase"
 names(biophys.ona)[names(biophys.ona) == "biophys_cum_currmap"] <- "Biophysical Connectivity Current Map"
+names(biophys.norm.ona)[names(biophys.norm.ona) == "biophys_normalized_cum_currmap"] <- "Biophysical Connectivity Normalized Current Map"
+
 names(bhs.ona)[names(bhs.ona) == "Height"] <- "Bear Habitat Suitability (BHS)"
 
 
 # Save our Cropped Rasters: -----------------------------------------------
 terra::writeRaster(grizzinc.ona, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/grizz_inc_ona.tif")
 terra::writeRaster(biophys.ona, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/biophys_ona.tif")
+terra::writeRaster(biophys.norm.ona, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/biophys_normalized_ona.tif")
+
+
 terra::writeRaster(bhs.ona, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/bhs_ona.tif")
 terra::writeRaster(d2pa.ona, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/dist2pa_ona.tif") # already saved
 terra::writeRaster(d2grizzpop.ona, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/dist2grizz_pop_ona.tif") # already saved
