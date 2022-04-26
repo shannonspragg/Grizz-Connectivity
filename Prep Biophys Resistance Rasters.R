@@ -85,11 +85,7 @@ hii.rescale[hii.rescale == 0] <- 0.000000001
 hii.rescale[is.nan(hii.rescale)] <- 1
 
 # Rescale HII:
-hmi.min <- global(hmi.crop, "min", na.rm=TRUE)[1,]
-hmi.max <- global(hmi.crop, "max", na.rm=TRUE)[1,]
-hmi.rescale <- (hmi.crop - hmi.min) / (hmi.max - hmi.min)
-hmi.rescale[hmi.rescale == 0] <- 0.000000001
-hmi.rescale[is.nan(hmi.rescale)] <- 1
+hmi.rescale <- hmi.crop / 65536
 
   # Project grizz resistance:
 griz.resist.proj <- terra::project(griz.resist, griz.ext, method="bilinear")
@@ -111,9 +107,11 @@ griz.ext.inv <- (griz.ext.nozero)^-1
   # Make our Biophys & SocialBiophys Layers:
 biophys.hii <- hii.rescale + rough.rescale
 biophys.hmi <- hmi.rescale + rough.rescale
+biophys.hmi[biophys.hmi > 1] <- 2
 
 biophys.hii.combined <- hii.rescale + griz.ext.invert + rough.rescale
 biophys.hmi.combined <- hmi.rescale + griz.ext.invert + rough.rescale
+biophys.hmi.combined[biophys.hmi.combined > 1.3] <- 2
 
 #social.biophys <- hii.rescale + griz.ext.invert + rough.rescale + griz.resist.1m
 
