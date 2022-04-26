@@ -63,3 +63,7 @@ biophys_normalized_cum_currmap.tif
 biophys_cum_currmap.tif
 bio_comb_cum_currmap.tif
 bio_comb_normalized_cum_currmap.tif
+warp_df_complete.dbf
+warp_df_complete.prj
+warp_df_complete.shp
+warp_df_complete.shx
