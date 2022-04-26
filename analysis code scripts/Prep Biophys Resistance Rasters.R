@@ -96,6 +96,7 @@ hii.rescale[is.nan(hii.rescale)] <- 1
 hmi.rescale <- hmi.crop / 65536
 hmi.proj <- terra::project(hmi.rescale, griz.ext, method="bilinear")
 
+
   # Project grizz resistance:
 griz.resist.proj <- terra::project(griz.resist, griz.ext, method="bilinear")
 griz.resist.crop <- elev.crop <- crop(griz.resist.proj, griz.ext)
