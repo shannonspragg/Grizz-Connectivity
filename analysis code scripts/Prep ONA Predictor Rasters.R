@@ -24,7 +24,7 @@ grizz.inc.comb <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/processed/g
 bhs.rast <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/original/grizz_dens.tif")
 
   # Biophysical Current Map (Cumulative current flow shows the total current for each landscape pixel):
-biophys.rast <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/original/cum_currmap.tif") # NEED NEW ONE FOR ONA
+biophys.rast <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/original/biophys_cum_currmap.tif") 
 
   # SOI Region for plotting:
 ona.bound <- st_read("/Users/shannonspragg/Grizz-Connectivity/Data/original/ONA_TerritoryBound.shp") 
@@ -168,7 +168,7 @@ plot(d2grizzpop.ona)
 
 # Fix the column names:
 names(grizzinc.ona)[names(grizzinc.ona) == "grizz.increase.map.fixed"] <- "Support for Grizzly Increase"
-names(biophys.ona)[names(biophys.ona) == "cum_currmap"] <- "Biophysical Connectivity Current Map"
+names(biophys.ona)[names(biophys.ona) == "biophys_cum_currmap"] <- "Biophysical Connectivity Current Map"
 names(bhs.ona)[names(bhs.ona) == "Height"] <- "Bear Habitat Suitability (BHS)"
 
 
