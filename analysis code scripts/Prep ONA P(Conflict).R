@@ -89,23 +89,17 @@ vary.int.subset.co <- varying.int.means.co[ , c("grp", "condval")]
 ccs.varint.join.co <- merge(ona.ccs.crop, vary.int.subset.co, by.x = "NAME", by.y = "grp")
 
 # Now that it's spatial, do a spatial join to assign a varying intercept mean to each point:
-warp.varint.join.co <- st_join(warp.df, left = TRUE, ccs.varint.join.co) # join points
+warp.varint.join <- warp.df %>%
+  st_join(., ccs.varint.join.co[, c("NAME", "CenssID", "condval")], left = TRUE) # This gives us duplicate rows!!!
 
-
-  # Delete Duplicate Rows:  NEED TO GET THIS FIXED!!!
-
-warp.varint.join.co <- mutate(warp.varint.join.co, ID = row_number())
-warp.varint.join.co <- warp.varint.join.co %>%
-  dplyr::select(ID, everything())
-
-warp.varint.merged <- warp.varint.join.co %>%
-  distinct(ID, .keep_all = TRUE)
+# Merge the multiple rows down to just one for each obs:
+warp.varint.merged <- warp.varint.join[!duplicated(warp.varint.join$encontr_d),] # This worked!! but did it do what you wanted? the duplicate rows seem like they are a function of the fact that collisions and pas span multiple counties. Your code doesn't merge things, it drops things. That might be fine, but you want to be aware of the difference
 
 
 # Make our CCS Raster: ----------------------------------------------------
 # Make these spatvectors:
 ona.ccs.sv <- vect(ona.ccs.reproj)
-warp.co.sv <- vect(warp.varint.join.co)
+warp.co.sv <- vect(warp.varint.join)
 
 # Make our CCS Post Mean Raster: ------------------------------------------
 ona.ccs.rast <- terra::rasterize(ona.ccs.sv, ona.rast, field = "NAME")
@@ -125,7 +119,7 @@ ccs.varint.means.rast.co <- terra::rasterize(ona.ccs.sv, ona.rast, field = "CCSM
 names(ccs.varint.means.rast.co)[names(ccs.varint.means.rast.co) == "CCSMean"] <- "CCS Varying Intercept Means"
 
   # Check this:
-plot(ccs.varint.means.rast) 
+plot(ccs.varint.means.rast.co) 
 
   # Merge back to other regions:
 ccs.means.merge <- terra::merge(ccs.varint.means.rast.co, ona.ccs.rast)
