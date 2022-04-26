@@ -91,8 +91,12 @@ ccs.varint.join.co <- merge(ona.ccs.crop, vary.int.subset.co, by.x = "NAME", by.
 # Now that it's spatial, do a spatial join to assign a varying intercept mean to each point:
 warp.varint.join.co <- st_join(warp.df, left = TRUE, ccs.varint.join.co) # join points
 
+<<<<<<< HEAD
   # Delete Duplicate Rows:  NEED TO GET THIS FIXED!!!
 
+=======
+  # Delete Duplicate Rows:
+>>>>>>> 7227c62213180e40c32da35240e232917a72c07c
 warp.varint.join.co <- mutate(warp.varint.join.co, ID = row_number())
 warp.varint.join.co <- warp.varint.join.co %>%
   dplyr::select(ID, everything())
