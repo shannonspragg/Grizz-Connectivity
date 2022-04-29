@@ -58,7 +58,7 @@ grizzinc.wa.rsmple <- resample(grizz.inc.wa.reproj, griz_dens, method='bilinear'
 # Merge our BC and WA rasters: -----------------------------------------------------
 grizz.inc.comb <- terra::merge(grizzinc.bc.rsmple, grizzinc.wa.rsmple)
 
-griz.resist <- grizz.inc.comb
+#griz.resist <- grizz.inc.comb
 
 # Prep Other Rasters: -----------------------------------------------------
 
@@ -67,7 +67,7 @@ griz.ext <- terra::extend(griz_dens, ona_proj.vec, filename=here("data/processed
 #griz.crop <- crop(griz.ext, ona_proj.vec)
 griz.ext[is.nan(griz.ext)] <- 0
 
-  # Project & Crop HII:
+  # Project & Crop HII: SKIP
 hii.proj <- terra::project(hii, griz.ext, method="bilinear")
 hii.crop <- crop(hii.proj, griz.ext)
 
@@ -98,25 +98,20 @@ hmi.proj <- terra::project(hmi.rescale, griz.ext, method="bilinear")
 
 
   # Project grizz resistance:
-griz.resist.proj <- terra::project(griz.resist, griz.ext, method="bilinear")
-griz.resist.crop <- elev.crop <- crop(griz.resist.proj, griz.ext)
-griz.resist.1m <- 1-griz.resist.crop
-griz.resist.1m[is.nan(griz.resist.1m)] <- 1
+griz.comb.proj <- terra::project(grizz.inc.comb, griz.ext, method="bilinear")
+griz.inc.crop <- elev.crop <- crop(griz.comb.proj, griz.ext)
+griz.resist <- 1-griz.inc.crop
+griz.resist[is.nan(griz.resist)] <- 1
 
-  # Scale Grizz Extents:
-griz.ext.min <-global(griz.ext, "min", na.rm=TRUE)[1,]
-griz.ext.max <- global(griz.ext, "max", na.rm=TRUE)[1,] 
-griz.rescale <- (griz.ext - griz.ext.min) / (griz.ext.max - griz.ext.min)
+  # Invert Grizz dens raster:
+griz.ext.inv <- 1/(griz.ext)
+
+# Scale Grizz Extents:
+griz.ext.min <-global(griz.ext.inv, "min", na.rm=TRUE)[1,]
+griz.ext.max <- global(griz.ext.inv, "max", na.rm=TRUE)[1,] 
+griz.rescale <- (griz.ext.inv - griz.ext.min) / (griz.ext.max - griz.ext.min)
 griz.rescale[griz.rescale == 0] <- 0.000000001
 griz.rescale[is.nan(griz.rescale)] <- 1
-
-  # Invert raster:
-griz.ext.invert <- ((griz.ext - griz.ext.max)*-1) + griz.ext.min
-griz.ext.invert[griz.ext.invert == 0] <- 0.000000001
-griz.ext.nozero <- griz.ext
-griz.ext.nozero[griz.ext.nozero==0] <- 0.0000000001
-griz.ext.inv <- (griz.ext.nozero)^-1
-
 
   # Make our Biophys Resiatance:
 biophys.hii <- hii.rescale + rough.rescale
@@ -125,21 +120,25 @@ biophys.hmi[biophys.hmi > 1] <- 2
 
 
   # Fuzzy sum approach to combine them from Theobald 2013:
-fuzzysum <- function(r1, r2) {
+fuzzysum <- function(r1, r2, r3, r4) {
   rc1.1m <- (1-r1)
   rc2.1m <- (1-r2)
-  fuz.sum <- 1-(rc1.1m*rc2.1m)
+  rc3.1m <- (1-r3)
+  rc4.1m <- (1-r4)
+  fuz.sum <- 1-(rc1.1m*rc2.1m*rc2.1m*rc4.1m)
 }
-biophys_fuzsum <- fuzzysum(griz.rescale, hmi.proj)
-plot(biophys_fuzsum, col=plasma(256), axes = TRUE, main = "BHS+HMI Resistance Layer")
+biophys_fuzsum <- fuzzysum(griz.rescale, hmi.proj, rough.rescale)
+plot(biophys_fuzsum, col=plasma(256), axes = TRUE, main = "BHS+gHM Resistance Layer")
+
+bio_social_fuzzysum <- fuzzysum(griz.rescale, hmi.proj, rough.rescale, griz.resist)
 
   # Make into resistance surface
-biophys_comb_resistance <- (1+biophys_fuzsum)^10
-plot(biophys_comb_resistance, col=plasma(256), axes = TRUE, main = "BHS+HMI Resistance Layer")
+biophys_resistance <- (1+biophys_fuzsum)^10
+plot(biophys_resistance, col=plasma(256), axes = TRUE, main = "BHS+HMI Resistance Layer")
 
+biophys_social_resistance <- (1+bio_social_fuzzysum)^10
+plot(biophys_social_resistance, col=plasma(256), axes = TRUE, main = "Biophys + Social Resistance Layer")
 
-biophys.hii.combined <- hii.rescale + griz.ext.inv + rough.rescale
-biophys.hmi.combined <- hmi.rescale + griz.ext.inv + rough.rescale
 
 
   # Mask to ONA:
