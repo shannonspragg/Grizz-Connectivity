@@ -12,6 +12,9 @@ Here, we download the HII and elevation and topographic ruggedness data to compi
 ############################### Prep ONA Predictor Rasters.R ####################################
 In this script, we prepare our predictor rasters for each variable. These will be used in a raster math calculation to produce our probability of predicted conflict raster for the ONA territory.
 
+############################## Prep ONA P(Conflict).R ###########################################
+This script is where we bring in our predictor rasters, scale them, multiply them by their corresponding regression coefficients, and add them together using raster math. The result of this is a probability of conflict raster for ONA based on our variables, which will be scaled and turned into a resistance layer.
+
 ############################## Probability of Conflict Resistance Surface.R #####################
 This is the script where we convert our probability of conflict raster into a resistance surface for our omniscape run to produce our connectivity map based on the predicted probability of bear conflict across the ONA territory.
 
