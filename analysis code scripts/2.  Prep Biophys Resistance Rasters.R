@@ -68,12 +68,15 @@ griz.ext <- terra::extend(griz_dens, ona_proj.vec, filename=here("data/processed
 griz.ext[is.nan(griz.ext)] <- 0
 
   # Project & Crop HII: SKIP
-hii.proj <- terra::project(hii, griz.ext, method="bilinear")
-hii.crop <- crop(hii.proj, griz.ext)
+#hii.proj <- terra::project(hii, griz.ext, method="bilinear")
+#hii.crop <- crop(hii.proj, griz.ext)
 
-# Project & Crop HMI:
+  # Project & Crop HMI:
 hmi.proj <- terra::project(hmi, griz.ext, method="bilinear")
 hmi.crop <- crop(hmi.proj, griz.ext)
+
+  # Rescale HMI:
+hmi.rescale <- hmi.crop / 65536
 
   # Project & Crop Elev:
 elev.proj <- terra::project(elev, griz.ext, method="bilinear")
@@ -86,15 +89,13 @@ rough.rescale[rough.rescale==0] <- 0.000000001
 rough.rescale[is.nan(rough.rescale)] <- 1
 
   # Rescale HII:
-hii.min <- global(hii.crop, "min", na.rm=TRUE)[1,]
-hii.max <- global(hii.crop, "max", na.rm=TRUE)[1,]
-hii.rescale <- (hii.crop - hii.min) / (hii.max - hii.min)
-hii.rescale[hii.rescale == 0] <- 0.000000001
-hii.rescale[is.nan(hii.rescale)] <- 1
+#hii.min <- global(hii.crop, "min", na.rm=TRUE)[1,]
+#hii.max <- global(hii.crop, "max", na.rm=TRUE)[1,]
+#hii.rescale <- (hii.crop - hii.min) / (hii.max - hii.min)
+#hii.rescale[hii.rescale == 0] <- 0.000000001
+#hii.rescale[is.nan(hii.rescale)] <- 1
 
-# Rescale HII:
-hmi.rescale <- hmi.crop / 65536
-hmi.proj <- terra::project(hmi.rescale, griz.ext, method="bilinear")
+
 
 
   # Project grizz resistance:
@@ -113,26 +114,29 @@ griz.rescale <- (griz.ext.inv - griz.ext.min) / (griz.ext.max - griz.ext.min)
 griz.rescale[griz.rescale == 0] <- 0.000000001
 griz.rescale[is.nan(griz.rescale)] <- 1
 
-  # Make our Biophys Resiatance:
-biophys.hii <- hii.rescale + rough.rescale
-biophys.hmi <- hmi.proj + rough.rescale
-biophys.hmi[biophys.hmi > 1] <- 2
 
+# Fuzzysum Our Rasters: ---------------------------------------------------
 
   # Fuzzy sum approach to combine them from Theobald 2013:
-fuzzysum <- function(r1, r2, r3, r4) {
+fuzzysum3 <- function(r1, r2, r3) {
+  rc1.1m <- (1-r1)
+  rc2.1m <- (1-r2)
+  rc3.1m <- (1-r3)
+  fuz.sum <- 1-(rc1.1m*rc2.1m*rc2.1m)
+}
+  # Add together our biophys attributes: grizz density, gHM, and roughness
+biophys_fuzsum <- fuzzysum3(hmi.rescale, rough.rescale, griz.rescale)
+plot(biophys_fuzsum, col=plasma(256), axes = TRUE, main = "BHS+gHM Resistance Layer")
+
+fuzzysum4 <- function(r1, r2, r3, r4) {
   rc1.1m <- (1-r1)
   rc2.1m <- (1-r2)
   rc3.1m <- (1-r3)
   rc4.1m <- (1-r4)
   fuz.sum <- 1-(rc1.1m*rc2.1m*rc2.1m*rc4.1m)
 }
-  # Add together our biophys attributes: grizz density, gHM, and roughness
-biophys_fuzsum <- fuzzysum(griz.rescale, hmi.proj, rough.rescale)
-plot(biophys_fuzsum, col=plasma(256), axes = TRUE, main = "BHS+gHM Resistance Layer")
-
 # Add together our biophys attributes + grizz inc resist: grizz density, gHM, and roughness + grizz resist
-bio_social_fuzzysum <- fuzzysum(griz.rescale, hmi.proj, rough.rescale, griz.resist)
+bio_social_fuzzysum <- fuzzysum4(hmi.rescale, rough.rescale, griz.rescale, griz.resist)
 
   # Make into resistance surface
 biophys_resistance <- (1+biophys_fuzsum)^10
@@ -140,7 +144,6 @@ plot(biophys_resistance, col=plasma(256), axes = TRUE, main = "BHS+HMI Resistanc
 
 biophys_social_resistance <- (1+bio_social_fuzzysum)^10
 plot(biophys_social_resistance, col=plasma(256), axes = TRUE, main = "Biophys + Social Resistance Layer")
-
 
 
   # Mask to ONA: SKIP (want to run omniscape on all of BC then crop)
