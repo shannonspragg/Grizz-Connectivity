@@ -24,7 +24,7 @@ rescale01 <- function(r1) {
 # Bring in Rasters: -----------------------------------------------
 
 r <- raster("Data/processed/ona_bound.tif") 
-p.bear.conf <- raster("Data/original/prob_bear_conflict.tif")
+p.bear.conf <- raster("Data/processed/ona_p_bear_conf.tif")
 grizz.dens <- raster("Data/original/grizz_dens.tif")
 
 
