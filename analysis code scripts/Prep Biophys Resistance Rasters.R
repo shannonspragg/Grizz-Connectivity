@@ -127,9 +127,11 @@ fuzzysum <- function(r1, r2, r3, r4) {
   rc4.1m <- (1-r4)
   fuz.sum <- 1-(rc1.1m*rc2.1m*rc2.1m*rc4.1m)
 }
+  # Add together our biophys attributes: grizz density, gHM, and roughness
 biophys_fuzsum <- fuzzysum(griz.rescale, hmi.proj, rough.rescale)
 plot(biophys_fuzsum, col=plasma(256), axes = TRUE, main = "BHS+gHM Resistance Layer")
 
+# Add together our biophys attributes + grizz inc resist: grizz density, gHM, and roughness + grizz resist
 bio_social_fuzzysum <- fuzzysum(griz.rescale, hmi.proj, rough.rescale, griz.resist)
 
   # Make into resistance surface
@@ -141,7 +143,7 @@ plot(biophys_social_resistance, col=plasma(256), axes = TRUE, main = "Biophys + 
 
 
 
-  # Mask to ONA:
+  # Mask to ONA: SKIP (want to run omniscape on all of BC then crop)
 biophys.hii.ona <- terra::mask(biophys.hii, ona_proj.vec) 
 biophys.hmi.ona <- terra::mask(biophys.hmi, ona_proj.vec) 
 
@@ -154,8 +156,8 @@ writeRaster(griz.ext, filename=here("data/processed/griz_source.tif"), overwrite
 writeRaster(griz.ext.invert, filename=here("data/processed/griz_resist.tif"), overwrite=TRUE)
 writeRaster(griz.ext.inv, filename=here("data/processed/griz_resist_recip.tif"), overwrite=TRUE)
 
-writeRaster(biophys.hii.combined, filename=here("data/processed/bio_combined_hii_resist.tif"), overwrite=TRUE)
-writeRaster(biophys.hmi.combined, filename=here("data/processed/bio_combined_hmi_resist.tif"), overwrite=TRUE)
+writeRaster(biophys_resistance, filename=here("data/processed/biophys_resist.tif"), overwrite=TRUE)
+writeRaster(biophys_social_resistance, filename=here("data/processed/biophys_social_resist.tif"), overwrite=TRUE)
 writeRaster(biophys_comb_resistance, "data/raster_layers/biophys_comb_resistance_layer.tif", overwrite = TRUE)
 
 writeRaster(biophys.hii, filename=here("data/processed/biophys_hii_resist.tif"), overwrite=TRUE)
