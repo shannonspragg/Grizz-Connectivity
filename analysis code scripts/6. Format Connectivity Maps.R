@@ -40,3 +40,13 @@ social.biophys.normalized.ona <- terra::mask(social.biophys.ona.rsample, ona.tem
 # prob.conf.normalized.ona <- terra::mask(prob.conf.ona.rsample, ona.template)
 
 
+# Save Cropped Rasters: ---------------------------------------------------
+writeRaster(biophys.normalized.ona, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/biophys_normalized_ona.tif", overwrite=TRUE)
+writeRaster(social.biophys.normalized.ona, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/social_biophys_normalized_ona.tif", overwrite=TRUE)
+# writeRaster(prob.conf.normalized.ona, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/p_conflict_normalized_ona.tif", overwrite=TRUE)
+
+
+
+# Plot the Outputs: -------------------------------------------------------
+
+
