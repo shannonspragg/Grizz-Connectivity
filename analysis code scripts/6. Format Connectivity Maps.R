@@ -1,5 +1,5 @@
 # Format ONA Connectivity Raster Maps: ------------------------------------
-  ## Here, we will be bringing in our circuitscape outputs for the three resistance layers that we ran analyses on.
+  ## Here, we will be bringing in our omniscape outputs for the three resistance layers that we ran analyses on.
   ## We will be cropping these down to the ONA extent, masking them to just the ONA territory outline, and
   ## making nice maps with them.
 
@@ -16,7 +16,27 @@ library(measurements)
 
 
 # Bring in Data: ----------------------------------------------------------
+  # Biophysical Omniscape Map:
+biophys.normalized.cs <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/original/biophysical_normalized_cum_currmap.tif")
+
+  # Social + Biophysical Omniscape Map: (Social values of grizzlies)
+social.bio.normalized <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/original/social_biophys_normalized_cum_currmap.tif")
+
+  # Probability of Bear Conflict Omniscape Map:
+#prob.bear.conf.normalized <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/original/p_conflict_normalized_cum_currmap.tif")
 
 
+  # ONA Template Raster:
+ona.template <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/processed/ona_bound.tif")
+
+# Resample Rasters: -------------------------------------------------------
+biophys.ona.rsample <- resample(biophys.normalized.cs, ona.template)
+social.biophys.ona.rsample <- resample(social.bio.normalized, ona.template)
+# prob.conf.ona.rsample <- resample(prob.bear.conf.normalized, ona.template)
+
+# Mask Rasters: -----------------------------------------------------------
+biophys.normalized.ona <- terra::mask(biophys.ona.rsample, ona.template) 
+social.biophys.normalized.ona <- terra::mask(social.biophys.ona.rsample, ona.template) 
+# prob.conf.normalized.ona <- terra::mask(prob.conf.ona.rsample, ona.template)
 
 

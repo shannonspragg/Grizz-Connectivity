@@ -146,12 +146,7 @@ biophys_social_resistance <- (1+bio_social_fuzzysum)^10
 plot(biophys_social_resistance, col=plasma(256), axes = TRUE, main = "Biophys + Social Resistance Layer")
 
 
-  # Mask to ONA: SKIP (want to run omniscape on all of BC then crop)
-biophys.hii.ona <- terra::mask(biophys.hii, ona_proj.vec) 
-biophys.hmi.ona <- terra::mask(biophys.hmi, ona_proj.vec) 
-
-biophys.comb.ona <- terra::mask(biophys.combined, ona_proj.vec)
-
+ 
 writeRaster(grizz.inc.comb, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/grizz_inc_comb.tif")
 writeRaster(hii.rescale, filename=here("data/processed/hii_resist.tif"), overwrite=TRUE)
 writeRaster(hmi.rescale, filename=here("data/processed/hmi_resist.tif"), overwrite=TRUE)
