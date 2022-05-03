@@ -13,7 +13,7 @@ library(terra)
 library(dismo)
 library(stars)
 library(measurements)
-
+library(viridis)
 
 # Bring in Data: ----------------------------------------------------------
   # Biophysical Omniscape Map:
@@ -46,7 +46,10 @@ writeRaster(social.biophys.normalized.ona, "/Users/shannonspragg/Grizz-Connectiv
 # writeRaster(prob.conf.normalized.ona, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/p_conflict_normalized_ona.tif", overwrite=TRUE)
 
 
-
 # Plot the Outputs: -------------------------------------------------------
+
+plot(biophys.normalized.ona, col=plasma(256), axes = TRUE, main = "Biophysical Normalized Connectivity Map")
+
+plot(social.biophys.normalized.ona, col=plasma(256), axes = TRUE, main = "Social Values + Biophysical Normalized Connectivity Map")
 
 
