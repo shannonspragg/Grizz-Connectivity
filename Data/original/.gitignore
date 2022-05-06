@@ -71,3 +71,8 @@ post_co_offset.rds
 biophysical_normalized_cum_currmap.tif
 social_biophys_normalized_cum_currmap.tif
 p_conflict_normalized_cum_currmap.tif
+lpr_000b21a_e.dbf
+lpr_000b21a_e.prj
+lpr_000b21a_e.shp
+lpr_000b21a_e.shx
+lpr_000b21a_e.xml

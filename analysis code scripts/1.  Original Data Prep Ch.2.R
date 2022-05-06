@@ -53,6 +53,9 @@ grizz.units <- st_read("/Users/shannonspragg/Grizz-Connectivity/Data/original/GB
 grizz.inc.bc <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/original/grizz.increase.map.fixed.tif") #  the proportion of people within a census that 
 # grizz.inc.wa <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/original/grizz.increase.map.fixed.tif") #  the proportion of people within a census that 
 
+  # Bear Density - Bear Habitat Suitability (BHS):
+can.provs <- st_read("/Users/shannonspragg/Grizz-Connectivity/Data/original/lpr_000b21a_e.shp")
+
   # ONA Territory:
 ona.bound <- st_read("/Users/shannonspragg/Grizz-Connectivity/Data/original/ONA_TerritoryBound.shp") 
 
@@ -65,10 +68,12 @@ wa.proc.reproj <- st_transform(wa.procs, st_crs(bc.pas))
 grizzpop.reproj <- st_transform(grizz.units, st_crs(bc.pas))
 ona.reproj <- st_transform(ona.bound, st_crs(bc.pas))
 bc.pas.reproj <- st_transform(st_make_valid(bc.pas), st_crs(ona.reproj))
+can.provs.reproj <- st_transform(st_make_valid(can.provs), st_crs(bc.pas))
 
 st_crs(ccs.reproj) == st_crs(bc.pas) #TRUE
 st_crs(wa.county.reproj) == st_crs(wa.proc.reproj) #TRUE
 st_crs(grizzpop.reproj) == st_crs(ona.reproj) #TRUE
+crs(griz.source) # NAD83 / BC Albers
 
   # Make our SOI template raster:
 ona.vect <- vect(ona.reproj)
@@ -85,6 +90,14 @@ ona.rast[ona.rast == 27] <- 0
 
   # Export as tiff:
 terra::writeRaster(ona.rast, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/ona_bound.tif")
+
+
+  # Extract BC Boundary:
+bc.bound <-can.provs.reproj %>%
+  filter(., PRNAME == "British Columbia / Colombie-Britannique") %>%
+  st_make_valid()
+
+st_write(bc.bound, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/bc_bound.shp")
 
 ############################# Prep Agriculture Variables:
 ####################### Now, we will filter the CCS regions and Agriculture Data to BC:
@@ -158,11 +171,18 @@ head(wa.animal.sf)
 farm.ccs.sf <- st_transform(farm.ccs.sf, st_crs(ona.reproj))
 wa.animal.sf <- st_transform(wa.animal.sf, st_crs(ona.reproj))
 wa.crop.sf <- st_transform(wa.crop.sf, st_crs(ona.reproj))
-
+  # Crop these to ONA:
 farm.ccs.bc.ona <- st_intersection(farm.ccs.sf, ona.reproj) 
 animal.farms.ona <- st_intersection(wa.animal.sf, ona.reproj) 
 crop.farms.ona <- st_intersection(wa.crop.sf, ona.reproj) 
 crop.farms.ona$Value <- as.integer(crop.farms.ona$Value)
+
+# Keep these for all of BC:
+farm.ccs.bc <- st_intersection(farm.ccs.sf, griz.source) 
+animal.farms.wa <- st_intersection(wa.animal.sf, griz.source) 
+crop.farms.wa <- st_intersection(wa.crop.sf, griz.source) 
+crop.farms.wa$Value <- as.integer(crop.farms.wa$Value)
+
 
 plot(st_geometry(animal.farms.ona)) # plot to check
 plot(st_geometry(crop.farms.ona)) 
