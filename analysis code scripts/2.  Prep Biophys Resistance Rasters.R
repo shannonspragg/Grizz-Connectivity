@@ -140,7 +140,7 @@ bio_social_fuzzysum <- fuzzysum4(hmi.rescale, rough.rescale, griz.rescale, griz.
 
   # Make into resistance surface
 biophys_resistance <- (1+biophys_fuzsum)^10
-plot(biophys_resistance, col=plasma(256), axes = TRUE, main = "BHS+HMI Resistance Layer")
+plot(biophys_resistance, col=plasma(256), axes = TRUE, main = "Biophysical Resistance Layer")
 
 biophys_social_resistance <- (1+bio_social_fuzzysum)^10
 plot(biophys_social_resistance, col=plasma(256), axes = TRUE, main = "Biophys + Social Resistance Layer")
