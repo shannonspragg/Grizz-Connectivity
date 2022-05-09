@@ -75,21 +75,35 @@ st_crs(wa.county.reproj) == st_crs(wa.proc.reproj) #TRUE
 st_crs(grizzpop.reproj) == st_crs(ona.reproj) #TRUE
 crs(griz.source) # NAD83 / BC Albers
 
-  # Make our SOI template raster:
+
+  # Buffer ONA for Omniscape inputs:
+ona.buffer <- ona.reproj %>% 
+  st_buffer(., 10000)
+
+  # Make our ONA template raster:
 ona.vect <- vect(ona.reproj)
-grizz.inc.templ <- terra::project(grizz.inc.bc, crs(ona.vect))
-grizzinc.crop.t <- terra::crop(grizz.inc.templ, ona.vect)  
+ona.buf <- vect(ona.buffer)
+grizz.inc.templ <- terra::project(grizz.inc.bc, crs(ona.buf))
+grizzinc.crop.t <- terra::crop(grizz.inc.templ, ona.buf)  
 
 plot(grizzinc.crop.t)
 plot(ona.vect, add=TRUE)
 
+  # ONA territory:
 ona.rast.templ <- rast(ona.vect, nrows= 2027, ncols=1175, nlyrs=1, xmin=1340199, xmax=1658767, ymin=306186.8, ymax=855751.3)
 ona.rast <- terra::rasterize(ona.vect, ona.rast.templ, field = "HANDLE")
 ona.rast <- resample(ona.rast, grizzinc.crop.t, method='bilinear')
 ona.rast[ona.rast == 27] <- 0
 
+  # ONA Buffer:
+ona.buf.rast.templ <- rast(ona.buf, nrows= 2027, ncols=1175, nlyrs=1, xmin=1340199, xmax=1658767, ymin=306186.8, ymax=855751.3)
+ona.buf.rast <- terra::rasterize(ona.buf, ona.buf.rast.templ, field = "HANDLE")
+ona.buf.rast <- resample(ona.buf.rast, grizzinc.crop.t, method='bilinear')
+ona.buf.rast[ona.buf.rast == 27] <- 0
+
   # Export as tiff:
 terra::writeRaster(ona.rast, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/ona_bound.tif")
+terra::writeRaster(ona.buf.rast, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/ona_buf_bound.tif")
 
 
   # Extract BC Boundary:
@@ -167,21 +181,15 @@ head(farm.ccs.sf) # Here we have a farm type data frame with Multi-polygon geome
 head(wa.animal.sf)
 
 # Here we subset the farm data to ONA, and pull out the total farm counts: ---------------------------------
-  # Start by cropping the data down to SOI buffer:
+  # Start by cropping the data down to ONA buffer:
 farm.ccs.sf <- st_transform(farm.ccs.sf, st_crs(ona.reproj))
 wa.animal.sf <- st_transform(wa.animal.sf, st_crs(ona.reproj))
 wa.crop.sf <- st_transform(wa.crop.sf, st_crs(ona.reproj))
   # Crop these to ONA:
-farm.ccs.bc.ona <- st_intersection(farm.ccs.sf, ona.reproj) 
-animal.farms.ona <- st_intersection(wa.animal.sf, ona.reproj) 
-crop.farms.ona <- st_intersection(wa.crop.sf, ona.reproj) 
+farm.ccs.bc.ona <- st_intersection(farm.ccs.sf, ona.buffer) 
+animal.farms.ona <- st_intersection(wa.animal.sf, ona.buffer) 
+crop.farms.ona <- st_intersection(wa.crop.sf, ona.buffer) 
 crop.farms.ona$Value <- as.integer(crop.farms.ona$Value)
-
-# Keep these for all of BC:
-farm.ccs.bc <- st_intersection(farm.ccs.sf, griz.source) 
-animal.farms.wa <- st_intersection(wa.animal.sf, griz.source) 
-crop.farms.wa <- st_intersection(wa.crop.sf, griz.source) 
-crop.farms.wa$Value <- as.integer(crop.farms.wa$Value)
 
 
 plot(st_geometry(animal.farms.ona)) # plot to check
@@ -307,11 +315,11 @@ plot(st_geometry(animal.prod.ona))
 plot(st_geometry(ground.crop.ona))
 
 # Save these as .shp's for later:
-st_write(animal.prod.ona,"/Users/shannonspragg/Grizz-Connectivity/Data/processed/ONA Animal Product Farming.shp")
+st_write(animal.prod.ona,"/Users/shannonspragg/Grizz-Connectivity/Data/processed/ONA Animal Product Farming.shp", overwrite=TRUE)
 
-st_write(ground.crop.ona, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/ONA Ground Crop Production.shp") 
+st_write(ground.crop.ona, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/ONA Ground Crop Production.shp", overwrite=TRUE) 
 
-st_write(animal.prod.ona,"/Users/shannonspragg/Grizz-Connectivity/Data/processed/ONA Census Districts.shp")
+st_write(animal.prod.ona,"/Users/shannonspragg/Grizz-Connectivity/Data/processed/ONA Census Districts.shp", overwrite=TRUE)
 
 ################################ Combine our Protected Area Datasets:
 
@@ -322,8 +330,8 @@ head(wa.desig.filter)
 
 # Crop our PA's to ONA Boundary: ------------------------------------------
 
-bc.ona.pas <- st_intersection(bc.pas.reproj, ona.reproj) 
-wa.ona.pas <- st_intersection(wa.desig.filter, ona.reproj) 
+bc.ona.pas <- st_intersection(bc.pas.reproj, ona.buffer) 
+wa.ona.pas <- st_intersection(wa.desig.filter, ona.buffer) 
 
 # Subset only the columns we need: ----------------------------------------
 wa.pas <- wa.ona.pas[, c("Unit_Nm", "d_Des_Tp", "Mang_Type", "geometry" )]
@@ -340,13 +348,13 @@ ona.pas <- rbind(bc.pa, wa.pas)
   # Check this:
 plot(st_geometry(ona.pas))
 
-st_write(ona.pas, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/ona_PAs.shp") 
+st_write(ona.pas, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/ona_PAs.shp", overwrite=TRUE) 
 
 
 ################################# Prep Grizzly Population Units:
 
 # Check Projections: ------------------------------------------------------
-st_crs(grizzpop.reproj) == st_crs(ona.reproj) #TRUE
+st_crs(grizzpop.reproj) == st_crs(ona.buffer) #TRUE
 
 # Plot these together to see overlap:
 plot(st_geometry(grizzpop.reproj))
@@ -360,9 +368,9 @@ extant.grizz <- filter(grizzpop.reproj, POP_NAME == "South Chilcotin Ranges" | P
 
 # Plot with our boundary to see overlap/position
 plot(st_geometry(extant.grizz))
-plot(st_geometry(ona.reproj), add=TRUE)
+plot(st_geometry(ona.buffer), add=TRUE)
 
 # Save this for later:
-st_write(extant.grizz, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/Extent Grizzly Pop Units.shp") 
+st_write(extant.grizz, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/Extant Grizzly Pop Units.shp", overwrite=TRUE) 
 
 
