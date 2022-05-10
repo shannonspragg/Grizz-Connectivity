@@ -70,11 +70,11 @@ which(is.na(warp.df$CCSNAME.co)) # none
 
 ona.ccs.crop <- st_read( "/Users/shannonspragg/Grizz-Connectivity/Data/processed/ONA Census Districts.shp")
 # Bring in one of our rasters for rasterizing polygon data later:
-ona.rast <- terra::rast("/Users/shannonspragg/Grizz-Connectivity/Data/processed/ona_bound.tif") # ONA Region 
+ona.buf.rast <- terra::rast("/Users/shannonspragg/Grizz-Connectivity/Data/processed/ona_buf_bound.tif") # ONA Region 
 
 # Reproject the Data:
 ona.ccs.reproj <- st_make_valid(ona.ccs.crop) %>% 
-  st_transform(crs=crs(ona.rast))
+  st_transform(crs=crs(ona.buf.rast))
 
 # Check to see if they match:
 st_crs(warp.df) == st_crs(ona.ccs.reproj) # [TRUE] 
@@ -102,10 +102,10 @@ ona.ccs.sv <- vect(ona.ccs.reproj)
 warp.co.sv <- vect(warp.varint.join)
 
 # Make our CCS Post Mean Raster: ------------------------------------------
-ona.ccs.rast <- terra::rasterize(ona.ccs.sv, ona.rast, field = "NAME")
+ona.ccs.rast <- terra::rasterize(ona.ccs.sv, ona.buf.rast, field = "NAME")
 
 # Make Raster for our Posterior Means for CCS Varying Intercept: ---------------------
-varint.means.rast.co <- terra::rasterize(warp.co.sv, ona.rast, field = "condval")
+varint.means.rast.co <- terra::rasterize(warp.co.sv, ona.buf.rast, field = "condval")
 names(varint.means.rast.co)[names(varint.means.rast.co) == "HANDLE"] <- "CCS Varying Intercept Mean Estimate"
 
   # Extract Values of Posterior Means to CCS regions: 
@@ -115,7 +115,7 @@ warp.varint.mean.ext.co <- terra::extract(varint.means.rast.co, ona.ccs.sv, mean
 ona.ccs.sv$CCSMean <- warp.varint.mean.ext.co[,2] 
 
 # Make our CCS Post Mean Raster: ------------------------------------------
-ccs.varint.means.rast.co <- terra::rasterize(ona.ccs.sv, ona.rast, field = "CCSMean")
+ccs.varint.means.rast.co <- terra::rasterize(ona.ccs.sv, ona.buf.rast, field = "CCSMean")
 names(ccs.varint.means.rast.co)[names(ccs.varint.means.rast.co) == "CCSMean"] <- "CCS Varying Intercept Means"
 
   # Check this:

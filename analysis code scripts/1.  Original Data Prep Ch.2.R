@@ -104,7 +104,7 @@ ona.buf.rast[ona.buf.rast == 27] <- 0
   # Export as tiff:
 terra::writeRaster(ona.rast, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/ona_bound.tif")
 terra::writeRaster(ona.buf.rast, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/ona_buf_bound.tif")
-
+st_write(ona.buffer, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/ona_buffer_bound.shp")
 
   # Extract BC Boundary:
 bc.bound <-can.provs.reproj %>%

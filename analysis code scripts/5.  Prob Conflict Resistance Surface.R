@@ -23,17 +23,17 @@ rescale01 <- function(r1) {
 
 # Bring in Rasters: -----------------------------------------------
 
-r <- raster("Data/processed/ona_bound.tif") 
+r <- raster("Data/processed/ona_buf_bound.tif") 
 p.bear.conf <- raster("Data/processed/ona_p_bear_conf.tif")
-grizz.dens <- raster("Data/original/grizz_dens.tif")
+grizz.dens <- raster("Data/processed/bhs_ona.tif")
 
 
 # NOTE: need to check p(conflict values so highest resistance is highest p(conflict))
 
+
   # Resample to match the extent and resolution of template raster
 p.conf.resample <- resample(p.bear.conf, grizz.dens)
 plot(p.conf.resample)
-plot(grizz.dens, add=TRUE)
 
 # Rescale our Raster for Standardization: ---------------------------------
   # Rescale to 0-1 for standardization
