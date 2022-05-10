@@ -19,10 +19,10 @@ library(viridis)
   # Biophysical Omniscape Map:
 biophys.normalized.cs <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/original/biophysical_normalized_cum_currmap.tif")
 
-  # Social + Biophysical Omniscape Map: (Social values of grizzlies)
+  # Social + Biophysical Omniscape Map: (Social values of grizzlies) NEED UPDATED
 social.bio.normalized <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/original/social_biophys_normalized_cum_currmap.tif")
 
-  # Probability of Bear Conflict Omniscape Map:
+  # Probability of Bear Conflict Omniscape Map: NEED UPDATED
 prob.bear.conf.normalized <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/original/p_conflict_normalized_cum_currmap.tif")
 
 
