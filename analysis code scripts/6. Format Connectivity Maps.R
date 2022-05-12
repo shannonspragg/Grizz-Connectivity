@@ -65,16 +65,29 @@ can.census.regions <- st_read("/Users/shannonspragg/Grizz-Connectivity/Data/orig
 bc.census.regions <- can.census.regions %>%
   filter(., PRNAME == "British Columbia / Colombie-Britannique") %>%
   st_make_valid()
-
+  # Filter to the Census Regions we want:
 okanagan.census.regions <- bc.census.regions %>%
   filter(.,  CDUID == "5907" | CDUID == "5905" | CDUID == "5933" | CDUID == "5935" | CDUID == "5937")
-
+st_write(okanagan.census.regions, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/okanagan_census_crop.shp")
+  
   # Reproject:
 census.zoom.reproj <- st_transform(okanagan.census.regions, st_crs(crs(ona.template)))
 census.zoom.vect <- vect(census.zoom.reproj)
 
   # Crop Rasters to this Area:
 biophys.zoom <- terra::mask(biophys.normalized.ona, census.zoom.vect) 
+social.biophys.zoom <- terra::mask(social.biophys.normalized.ona, census.zoom.vect) 
+p.conf.zoom <- terra::mask(prob.conf.normalized.ona, census.zoom.vect) 
 
 
 plot(biophys.zoom, col=plasma(256), axes = TRUE, main = "Biophysical Normalized Connectivity Map")
+plot(social.biophys.zoom, col=plasma(256), axes = TRUE, main = "Social Biophysical Normalized Connectivity Map")
+plot(p.conf.zoom, col=plasma(256), axes = TRUE, main = "Probability of Bear Conflict Normalized Connectivity Map")
+
+
+# Save our Cropped Outputs: -----------------------------------------------
+writeRaster(biophys.zoom, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/biophys_zoom.tif", overwrite=TRUE)
+writeRaster(social.biophys.zoom, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/social_biophys_zoom.tif", overwrite=TRUE)
+writeRaster(p.conf.zoom, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/p_conflict_zoom.tif", overwrite=TRUE)
+
+

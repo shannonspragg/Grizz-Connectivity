@@ -62,3 +62,10 @@ grizz_dens_mean.tif
 biophys_normalized_ona.tif.aux.xml
 p_conflict_normalized_ona.tif.aux.xml
 social_biophys_normalized_ona.tif.aux.xml
+biophys_zoom.tif
+okanagan_census_crop.dbf
+okanagan_census_crop.prj
+okanagan_census_crop.shp
+okanagan_census_crop.shx
+p_conflict_zoom.tif
+social_biophys_zoom.tif
