@@ -28,6 +28,9 @@ prob.bear.conf.normalized <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/
 
   # ONA Template Raster:
 ona.template <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/processed/ona_bound.tif")
+ona.bound <- st_read("/Users/shannonspragg/Grizz-Connectivity/Data/original/ONA_TerritoryBound.shp") 
+ona.reproj <- st_transform(ona.bound, st_crs(crs(ona.template)))
+ona.vect <- vect(ona.reproj)
 
 # Resample Rasters: -------------------------------------------------------
 biophys.ona.rsample <- resample(biophys.normalized.cs, ona.template)
@@ -55,3 +58,23 @@ plot(social.biophys.normalized.ona, col=plasma(256), axes = TRUE, main = "Social
 plot(prob.conf.normalized.ona, col=plasma(256), axes = TRUE, main = "Probability of Bear Conflict Normalized Connectivity Map")
 
 
+# Make Zoomed In Maps for Figure 5: ---------------------------------------
+  # Bring in Census Data:
+can.census.regions <- st_read("/Users/shannonspragg/Grizz-Connectivity/Data/original/lcd_000b16a_e.shp")
+
+bc.census.regions <- can.census.regions %>%
+  filter(., PRNAME == "British Columbia / Colombie-Britannique") %>%
+  st_make_valid()
+
+okanagan.census.regions <- bc.census.regions %>%
+  filter(.,  CDUID == "5907" | CDUID == "5905" | CDUID == "5933" | CDUID == "5935" | CDUID == "5937")
+
+  # Reproject:
+census.zoom.reproj <- st_transform(okanagan.census.regions, st_crs(crs(ona.template)))
+census.zoom.vect <- vect(census.zoom.reproj)
+
+  # Crop Rasters to this Area:
+biophys.zoom <- terra::mask(biophys.normalized.ona, census.zoom.vect) 
+
+
+plot(biophys.zoom, col=plasma(256), axes = TRUE, main = "Biophysical Normalized Connectivity Map")
