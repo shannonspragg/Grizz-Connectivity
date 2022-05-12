@@ -22,7 +22,7 @@ rescale01 <- function(r1) {
 
 
 # Bring in Rasters: -----------------------------------------------
-
+bhs.ona <- rast("Data/processed/bhs_ona.tif")
 r <- raster("Data/processed/ona_buf_bound.tif") 
 p.bear.conf <- raster("Data/processed/ona_p_bear_conf.tif")
 grizz.dens <- raster("Data/processed/bhs_ona.tif")
@@ -50,7 +50,15 @@ p_conflict_resistance <- (1+p.conf.rescale)^10
 plot(p_conflict_resistance, col=plasma(256), axes = TRUE, main = "Probability of Bear Conflict Resistance Layer")
 
 
+# Change to Terra & Match Projections: ------------------------------------
+p_conf_rast <- rast(p_conflict_resistance)
+
+p.conflict.reproj <- terra::project(p_conf_rast, crs(bhs.ona))
+crs(p.conflict.reproj) == crs(bhs.ona)
+
+plot(p.conflict.reproj, col=plasma(256), axes = TRUE, main = "Probability of Bear Conflict Resistance Layer")
+
 # Save our Raster: --------------------------------------------------------
   # Write raster (saving both gdrive and local computer):
-writeRaster(p_conflict_resistance, "Data/processed/p_conflict_resistance_layer.tif", overwrite = TRUE)
+writeRaster(p.conflict.reproj, "Data/processed/p_conflict_resistance_layer.tif", overwrite = TRUE)
 
