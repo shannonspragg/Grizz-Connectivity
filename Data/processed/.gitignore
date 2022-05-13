@@ -69,3 +69,6 @@ okanagan_census_crop.shp
 okanagan_census_crop.shx
 p_conflict_zoom.tif
 social_biophys_zoom.tif
+biophys_zoom.tif.aux.xml
+p_conflict_zoom.tif.aux.xml
+social_biophys_zoom.tif.aux.xml
