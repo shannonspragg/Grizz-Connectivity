@@ -107,7 +107,7 @@ griz.resist[is.nan(griz.resist)] <- 1
   # Invert Grizz dens raster:
 griz.ext.inv <- 1/(griz.ext)
 
-# Scale Grizz Extents:
+# Scale Grizz Extents: don't need this bc this is in our source strength input
 griz.ext.min <-global(griz.ext.inv, "min", na.rm=TRUE)[1,]
 griz.ext.max <- global(griz.ext.inv, "max", na.rm=TRUE)[1,] 
 griz.rescale <- (griz.ext.inv - griz.ext.min) / (griz.ext.max - griz.ext.min)
@@ -118,25 +118,23 @@ griz.rescale[is.nan(griz.rescale)] <- 1
 # Fuzzysum Our Rasters: ---------------------------------------------------
 
   # Fuzzy sum approach to combine them from Theobald 2013:
+fuzzysum2 <- function(r1, r2) {
+  rc1.1m <- (1-r1)
+  rc2.1m <- (1-r2)
+  fuz.sum <- 1-(rc1.1m*rc2.1m)
+}
+  # Add together our biophys attributes: grizz density, gHM, and roughness
+biophys_fuzsum <- fuzzysum2(hmi.rescale, rough.rescale)
+plot(biophys_fuzsum, col=plasma(256), axes = TRUE, main = "BHS+gHM Resistance Layer")
+
 fuzzysum3 <- function(r1, r2, r3) {
   rc1.1m <- (1-r1)
   rc2.1m <- (1-r2)
   rc3.1m <- (1-r3)
-  fuz.sum <- 1-(rc1.1m*rc2.1m*rc2.1m)
-}
-  # Add together our biophys attributes: grizz density, gHM, and roughness
-biophys_fuzsum <- fuzzysum3(hmi.rescale, rough.rescale, griz.rescale)
-plot(biophys_fuzsum, col=plasma(256), axes = TRUE, main = "BHS+gHM Resistance Layer")
-
-fuzzysum4 <- function(r1, r2, r3, r4) {
-  rc1.1m <- (1-r1)
-  rc2.1m <- (1-r2)
-  rc3.1m <- (1-r3)
-  rc4.1m <- (1-r4)
-  fuz.sum <- 1-(rc1.1m*rc2.1m*rc2.1m*rc4.1m)
+  fuz.sum <- 1-(rc1.1m*rc2.1m*rc3.1m)
 }
 # Add together our biophys attributes + grizz inc resist: grizz density, gHM, and roughness + grizz resist
-bio_social_fuzzysum <- fuzzysum4(hmi.rescale, rough.rescale, griz.rescale, griz.resist)
+bio_social_fuzzysum <- fuzzysum3(hmi.rescale, rough.rescale, griz.resist)
 
   # Make into resistance surface
 biophys_resistance <- (1+biophys_fuzsum)^10
@@ -148,8 +146,9 @@ plot(biophys_social_resistance, col=plasma(256), axes = TRUE, main = "Biophys + 
 
  
 writeRaster(grizz.inc.comb, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/grizz_inc_comb.tif")
-writeRaster(hii.rescale, filename=here("data/processed/hii_resist.tif"), overwrite=TRUE)
+writeRaster(rough.rescale, filename=here("data/processed/rough_rescale.tif"), overwrite=TRUE)
 writeRaster(hmi.rescale, filename=here("data/processed/hmi_resist.tif"), overwrite=TRUE)
+writeRaster(griz.rescale, filename=here("data/processed/griz_rescale_resist.tif"), overwrite=TRUE)
 writeRaster(griz.ext, filename=here("data/processed/griz_source.tif"), overwrite=TRUE)
 writeRaster(griz.ext.invert, filename=here("data/processed/griz_resist.tif"), overwrite=TRUE)
 writeRaster(griz.ext.inv, filename=here("data/processed/griz_resist_recip.tif"), overwrite=TRUE)
