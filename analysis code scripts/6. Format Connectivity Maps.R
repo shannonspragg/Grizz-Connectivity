@@ -18,6 +18,8 @@ library(viridis)
 # Bring in Data: ----------------------------------------------------------
   # Biophysical Omniscape Map:
 biophys.normalized.cs <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/original/biophysical_normalized_cum_currmap.tif")
+biophys.flow.potential <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/original/biophysical_flow_potential.tif")
+biophys.cum.current <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/original/biophys_ona_cum_currmap.tif")
 
   # Social + Biophysical Omniscape Map: (Social values of grizzlies) NEED UPDATED
 social.bio.normalized <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/original/social_biophys_normalized_cum_currmap.tif")
@@ -34,11 +36,17 @@ ona.vect <- vect(ona.reproj)
 
 # Resample Rasters: -------------------------------------------------------
 biophys.ona.rsample <- resample(biophys.normalized.cs, ona.template)
+biophys.flow.rsample <- resample(biophys.flow.potential, ona.template)
+biophys.curmap.rsample <- resample(biophys.cum.current, ona.template)
+
 social.biophys.ona.rsample <- resample(social.bio.normalized, ona.template)
 prob.conf.ona.rsample <- resample(prob.bear.conf.normalized, ona.template)
 
 # Mask Rasters: -----------------------------------------------------------
 biophys.normalized.ona <- terra::mask(biophys.ona.rsample, ona.template) 
+biophys.flow.potential.ona <- terra::mask(biophys.flow.rsample, ona.template) 
+biophys.cum.current.ona <- terra::mask(biophys.curmap.rsample, ona.template) 
+
 social.biophys.normalized.ona <- terra::mask(social.biophys.ona.rsample, ona.template) 
 prob.conf.normalized.ona <- terra::mask(prob.conf.ona.rsample, ona.template)
 
@@ -52,6 +60,7 @@ writeRaster(prob.conf.normalized.ona, "/Users/shannonspragg/Grizz-Connectivity/D
 # Plot the Outputs: -------------------------------------------------------
 
 plot(biophys.normalized.ona, col=plasma(256), axes = TRUE, main = "Biophysical Normalized Connectivity Map")
+plot(biophys.cum.current.ona, col=plasma(256), axes = TRUE, main = "Biophysical Normalized Connectivity Map")
 
 plot(social.biophys.normalized.ona, col=plasma(256), axes = TRUE, main = "Social Values + Biophysical Normalized Connectivity Map")
 
