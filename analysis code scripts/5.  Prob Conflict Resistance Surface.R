@@ -22,6 +22,7 @@ rescale01 <- function(r1) {
 
 
 # Bring in Rasters: -----------------------------------------------
+
 bhs.ona <- rast("Data/processed/bhs_ona.tif")
 r <- raster("Data/processed/ona_buf_bound.tif") 
 ona.buf <- st_read("/Users/shannonspragg/Grizz-Connectivity/Data/processed/ona_buffer_bound.shp") 
@@ -83,8 +84,17 @@ prob_conf_fuzzysum <- fuzzysum3(hmi.ona.crop, rough.ona.crop, p.conf.rescale.ras
 p_conflict_resistance <- (1+prob_conf_fuzzysum)^10
 plot(p_conflict_resistance, col=plasma(256), axes = TRUE, main = "Probability of Bear Conflict Resistance Layer")
 
+  # Put the resistance and source into 1000 x 1000 resolution for omniscape:
+p.conflict.resistance <- resample(p_conflict_resistance, hmi.rescale.rast)
+p.conflict.resistance <- crop(p.conflict.resistance, p.conf.rescale.rast)
+names(p.conflict.resistance)[names(p.conflict.resistance) == "hmi_resist"] <- "Probability of Conflict Resistance"
+
+bhs.ona.rsmpl <- resample(bhs.ona, hmi.rescale.rast)
+bhs.ona.crop <- crop(bhs.ona.rsmpl, p.conf.rescale.rast)
+
 
 # Save our Raster: --------------------------------------------------------
   # Write raster (saving both gdrive and local computer):
-writeRaster(p_conflict_resistance, "Data/processed/p_conflict_resistance_layer.tif", overwrite = TRUE)
+writeRaster(p.conflict.resistance, "Data/processed/p_conflict_resistance_layer.tif", overwrite = TRUE)
+writeRaster(bhs.ona.crop, "Data/processed/bhs_ona.tif", overwrite = TRUE)
 
