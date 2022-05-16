@@ -79,6 +79,7 @@ fuzzysum3 <- function(r1, r2, r3) {
 # Add together our biophys attributes + grizz inc resist: grizz density, gHM, and roughness + grizz resist
 prob_conf_fuzzysum <- fuzzysum3(hmi.ona.crop, rough.ona.crop, p.conf.rescale.rast)
 
+writeRaster(prob_conf_fuzzysum, "Data/processed/p_conflict_raw_sum.tif", overwrite = TRUE)
 
 # Make this a Resistance Surface: -----------------------------------------
 p_conflict_resistance <- (1+prob_conf_fuzzysum)^10
