@@ -23,10 +23,13 @@ biophys.cum.current <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/origin
 
   # Social + Biophysical Omniscape Map: (Social values of grizzlies) NEED UPDATED
 social.bio.normalized <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/original/social_biophys_normalized_cum_currmap.tif")
+social.bio.cum.current <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/original/social_biophys_ona_cum_currmap.tif")
+social.bio.flow.potential <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/original/social_bio_flow_potential.tif")
 
   # Probability of Bear Conflict Omniscape Map: NEED UPDATED
 prob.bear.conf.normalized <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/original/p_conflict_normalized_cum_currmap.tif")
-prob.conflict.raw <- rast("Data/processed/p_conflict_raw_sum.tif")
+prob.conf.flow.potential <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/original/p_conflict_flow_potential.tif")
+prob.conf.cum.current <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/original/p_conflict_cum_currmap.tif")
 
   # ONA Template Raster:
 ona.template <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/processed/ona_bound.tif")
@@ -41,7 +44,7 @@ biophys.curmap.rsample <- resample(biophys.cum.current, ona.template)
 
 social.biophys.ona.rsample <- resample(social.bio.normalized, ona.template)
 prob.conf.ona.rsample <- resample(prob.bear.conf.normalized, ona.template)
-prob.conf.raw.rsample <- resample(prob.conflict.raw, ona.template)
+prob.conf.cum.curmap.rsample <- resample(prob.conf.cum.current, ona.template)
 
 # Mask Rasters: -----------------------------------------------------------
 biophys.normalized.ona <- terra::mask(biophys.ona.rsample, ona.template) 
@@ -50,12 +53,12 @@ biophys.cum.current.ona <- terra::mask(biophys.curmap.rsample, ona.template)
 
 social.biophys.normalized.ona <- terra::mask(social.biophys.ona.rsample, ona.template) 
 prob.conf.normalized.ona <- terra::mask(prob.conf.ona.rsample, ona.template)
-prob.conf.raw.ona <- terra::mask(prob.conf.raw.rsample, ona.template)
+prob.conf.cum.curmap.ona <- terra::mask(prob.conf.cum.curmap.rsample, ona.template)
 
 
-# Split Out Biophysical Basis: --------------------------------------------
+# Normalize Probability of Conflict: --------------------------------------------
   # Here we divide the raw biophys+prob conflict by biophys flow potential:
-biophys.baseline <- prob.conf.raw.ona / biophys.flow.potential.ona
+prob.conf.difference <- prob.conf.cum.curmap.ona / biophys.flow.potential.ona
 
 
 # Plot the Outputs: -------------------------------------------------------
@@ -67,7 +70,7 @@ plot(social.biophys.normalized.ona, col=plasma(256), axes = TRUE, main = "Social
 
 plot(prob.conf.normalized.ona, col=plasma(256), axes = TRUE, main = "Probability of Bear Conflict Normalized Connectivity Map")
 
-plot(biophys.baseline, col=plasma(256), axes = TRUE, main = "Probability of Bear Conflict Normalized Connectivity Map")
+plot(prob.conf.difference, col=plasma(256), axes = TRUE, main = "Probability of Bear Conflict Normalized Connectivity Map")
 
 # Save Cropped Rasters: ---------------------------------------------------
 writeRaster(biophys.normalized.ona, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/biophys_normalized_ona.tif", overwrite=TRUE)
@@ -75,7 +78,7 @@ writeRaster(social.biophys.normalized.ona, "/Users/shannonspragg/Grizz-Connectiv
 writeRaster(biophys.cum.current.ona, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/biophys_cum_current_ona.tif", overwrite=TRUE)
 
 
-writeRaster(prob.conf.normalized.ona, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/p_conflict_normalized_ona.tif", overwrite=TRUE)
+writeRaster(prob.conf.difference, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/p_conflict_normalized_ona.tif", overwrite=TRUE)
 
 
 # Make Zoomed In Maps for Figure 5: ---------------------------------------
