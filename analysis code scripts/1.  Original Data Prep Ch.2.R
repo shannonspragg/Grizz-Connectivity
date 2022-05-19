@@ -351,6 +351,65 @@ plot(st_geometry(ona.pas))
 st_write(ona.pas, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/ona_PAs.shp", overwrite=TRUE) 
 
 
+################################## Combine the Hydrology (Lake) Datasets:
+bc.lakes <- st_read("/Users/shannonspragg/ONA_GRIZZ/CAN Spatial Data/BC Hydrology/BCGW_7113060B_165298896733_5124/FWA_LAKES_POLY/FWLKSPL_polygon.shp")
+
+fgdb <- "/Users/shannonspragg/ONA_GRIZZ/CAN Spatial Data/WA Hydrology/hydro.gdb"
+
+  # List all feature classes in a file geodatabase
+subset(ogrDrivers(), grepl("GDB", name))
+fc_list <- ogrListLayers(fgdb)
+print(fc_list)
+
+  # Read the feature class for PA shapes
+fc <- readOGR(dsn=fgdb,layer="wbhydro")
+fc.sf <- as(fc, "sf") 
+
+  #  Filter to just LAKES:
+wa.lakes <- fc.sf %>% 
+  filter(., WB_HYDR_FTR_LABEL_NM == "Lake") %>% 
+  st_make_valid()
+
+  # Reproject data:
+wa.lakes.reproj <- st_transform(wa.lakes, st_crs(bc.pas))
+bc.lakes.reproj <- st_transform(bc.lakes, st_crs(bc.pas))
+
+  # Crop to ONA:
+bc.ona.lakes <- st_intersection(bc.lakes.reproj, ona.buffer) 
+wa.ona.lakes <- st_intersection(wa.lakes.reproj, ona.buffer) 
+
+  # Subset only the columns we need: ----------------------------------------
+wa.ona.lakes.subs <- wa.ona.lakes[, c("WB_HYDR_FTR_LABEL_NM", "SHAPE_Area", "ELEVATION" , "geometry" )]
+bc.ona.lakes.subs <- bc.ona.lakes[, c("WTRBDTP", "AREA_SQM", "ELEVATION", "geometry" )]
+
+names(wa.ona.lakes.subs)[names(wa.ona.lakes.subs) == "WB_HYDR_FTR_LABEL_NM"] <- "Hydro Type"
+names(wa.ona.lakes.subs)[names(wa.ona.lakes.subs) == "SHAPE_Area"] <- "AREA_SQM"
+names(bc.ona.lakes.subs)[names(bc.ona.lakes.subs) == "WTRBDTP"] <- "Hydro Type"
+
+  # Join the WA and BC PAs Data: -------------------------------------------------
+ona.lakes <- rbind(wa.ona.lakes.subs, bc.ona.lakes.subs)
+
+  # Filter size of lakes: for both female and male bears
+  # Female bears will cross up to 1.5km, male bears sometimes up to 6km
+female.resist.lakes <- ona.lakes %>% 
+  filter(., AREA_SQM > 1500) 
+
+male.resist.lakes <- ona.lakes %>% 
+  filter(., AREA_SQM > 6000) 
+
+average.resist.lakes <- ona.lakes %>% 
+  filter(., AREA_SQM > 3500) 
+
+
+  # Check this:
+plot(st_geometry(ona.lakes))
+
+st_write(ona.lakes, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/ona_lakes.shp", overwrite=TRUE) 
+st_write(female.resist.lakes, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/ona_lakes_female_resist.shp", overwrite=TRUE) 
+st_write(male.resist.lakes, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/ona_lakes_male_resist.shp", overwrite=TRUE) 
+st_write(average.resist.lakes, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/ona_lakes_avg_resist.shp", overwrite=TRUE) 
+
+
 ################################# Prep Grizzly Population Units:
 
 # Check Projections: ------------------------------------------------------
