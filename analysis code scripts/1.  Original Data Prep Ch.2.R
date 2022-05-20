@@ -15,6 +15,10 @@ library(terra)
 library(units)
 library(googledrive)
 library(stringr)
+install.packages("geosphere")
+install.packages("lakemorpho")
+library(geosphere)
+library(lakemorpho)
 
 # Load our Data with GoogleDrive: -----------------------------------------
 options(
@@ -399,6 +403,15 @@ male.resist.lakes <- ona.lakes %>%
 
 average.resist.lakes <- ona.lakes %>% 
   filter(., AREA_SQM > 3500) 
+
+  # Calculating Lake Width & Length:
+??lakemorpho
+
+ona.lakes.sp <- as(ona.lakes, "Spatial")
+
+ona.lakemorpho <- lakeMorphoClass(ona.lakes.sp)
+
+calcLakeMetrics(ona.lakemorpho, bearing=45, pointDens = 150)
 
 
   # Check this:
