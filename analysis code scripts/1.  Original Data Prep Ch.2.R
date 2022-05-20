@@ -15,10 +15,12 @@ library(terra)
 library(units)
 library(googledrive)
 library(stringr)
-install.packages("geosphere")
-install.packages("lakemorpho")
+#install.packages("geosphere")
+#install.packages("lakemorpho")
 library(geosphere)
 library(lakemorpho)
+library(here)
+
 
 # Load our Data with GoogleDrive: -----------------------------------------
 options(
@@ -404,13 +406,26 @@ male.resist.lakes <- ona.lakes %>%
 average.resist.lakes <- ona.lakes %>% 
   filter(., AREA_SQM > 3500) 
 
-  # Calculating Lake Width & Length:
-??lakemorpho
 
+#   Calculating Lake Width & Length: --------------------------------------
+
+  # Convert to lake object:
 ona.lakes.sp <- as(ona.lakes, "Spatial")
-
 ona.lakemorpho <- lakeMorphoClass(ona.lakes.sp)
 
+  # Prep Rasters:
+griz_dens <- rast(here("/Users/shannonspragg/Grizz-Connectivity/Data/original/grizz_dens.tif"))
+ona_vec <- vect(ona.buffer)
+
+elev.can <- rast(raster::getData('alt', country = 'CAN'))
+elev.us <- rast(raster::getData('alt', country = 'USA')[[1]])
+elev <- mosaic(elev.can, elev.us)
+
+elev.proj <- terra::project(elev, griz_dens, method="bilinear")
+elev.crop <- crop(elev.proj, ona_vec)
+
+  # This only takes one lake input at a time....
+ona.laketopo <- lakeSurroundTopo(ona.lakes.sp, elev.crop)
 calcLakeMetrics(ona.lakemorpho, bearing=45, pointDens = 150)
 
 
