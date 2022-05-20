@@ -413,7 +413,7 @@ average.resist.lakes <- ona.lakes %>%
 ona.lakes.sp <- as(ona.lakes, "Spatial")
 ona.lakemorpho <- lakeMorphoClass(ona.lakes.sp)
 
-  # Prep Rasters:
+  # Prep Elevation Rasters:
 griz_dens <- rast(here("/Users/shannonspragg/Grizz-Connectivity/Data/original/grizz_dens.tif"))
 ona_vec <- vect(ona.buffer)
 
@@ -424,9 +424,9 @@ elev <- mosaic(elev.can, elev.us)
 elev.proj <- terra::project(elev, griz_dens, method="bilinear")
 elev.crop <- crop(elev.proj, ona_vec)
 
-  # This only takes one lake input at a time....
-ona.laketopo <- lakeSurroundTopo(ona.lakes.sp, elev.crop)
-calcLakeMetrics(ona.lakemorpho, bearing=45, pointDens = 150)
+  # Calculate Lake Metrics:
+ona.laketopo <- lakeSurroundTopo(ona.lakes.sp, elev.crop) # This only takes one lake input at a time....
+lakeMaxWidth(ona.lakemorpho, 50)
 
 
   # Check this:
