@@ -122,7 +122,7 @@ fuzzysum2 <- function(r1, r2) {
   rc2.1m <- (1-r2)
   fuz.sum <- 1-(rc1.1m*rc2.1m)
 }
-  # Add together our biophys attributes: grizz density, gHM, and roughness
+  # Add together our biophys attributes: gHM and roughness
 biophys_fuzsum <- fuzzysum2(hmi.rescale, rough.rescale)
 plot(biophys_fuzsum, col=plasma(256), axes = TRUE, main = "BHS+gHM Resistance Layer")
 
@@ -132,7 +132,7 @@ fuzzysum3 <- function(r1, r2, r3) {
   rc3.1m <- (1-r3)
   fuz.sum <- 1-(rc1.1m*rc2.1m*rc3.1m)
 }
-# Add together our biophys attributes + grizz inc resist: grizz density, gHM, and roughness + grizz resist
+# Add together our biophys attributes + grizz inc resist: gHM, and roughness + grizz resist
 bio_social_fuzzysum <- fuzzysum3(hmi.rescale, rough.rescale, griz.resist)
 
   # Make into resistance surface

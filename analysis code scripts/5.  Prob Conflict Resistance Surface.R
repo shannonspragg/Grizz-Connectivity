@@ -43,17 +43,11 @@ rough.rescale.rast <- terra::rast(rough.rescale)
 hmi.ona.buf <- terra::mask(hmi.rescale.rast, ona.buf.vect)
 rough.ona.buf <- terra::mask(rough.rescale.rast, ona.buf.vect)
 
-
-# Rescale our Raster for Standardization: ---------------------------------
-  # Rescale to 0-1 for standardization
-  # set the NA values to 1 for highest resistance (won't run in CS otherwise)
-p.conf.rescale <- rescale01(p.conf.resample)
-p.conf.rescale[is.na(p.conf.rescale)]=1
-p.conf.rescale
-plot(p.conf.rescale, col=plasma(256), axes = TRUE, main = "Probability of Bear Conflict Resistance Layer")
-
   # Change this to terra for fuzzy sum:
-p.conf.rescale.rast <- rast(p.conf.rescale)
+p.conf.rescale.rast <- rast(p.conf.resample)
+p.conf.rescale.rast[is.na(p.conf.rescale.rast)]=1
+
+plot(p.conf.rescale.rast, col=plasma(256), axes = TRUE, main = "Probability of Bear Conflict Resistance Layer")
 
   # Match our biophys variables:
 hmi.rescale.resamp <- resample(hmi.ona.buf, p.conf.rescale.rast)
