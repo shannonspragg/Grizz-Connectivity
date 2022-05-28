@@ -26,19 +26,4 @@ grizz.inc.combine <- terra::merge(grizz.inc.bc, grizz.inc.wa)
 
 writeRaster(grizz.inc.combine, "Data/processed/grizz.inc.comb.tif", overwrite=TRUE)
 
-# Crop to ONA:
-grizz.inc.crop <- terra::crop(grizz.inc.combine, ona_proj.vect)
-
-# Reproject Raster:
-ona_proj <- ona_bdry %>% st_transform(., crs(griz_dens)) %>% st_buffer(., dist=5000) %>% as(., "Spatial")
-ona.proj.vec <- vect(ona_proj)
-
-grizzinc.reproj <- terra::project(grizz.inc.crop, griz_dens)
-
-# Resample
-grizzinc.rsmple <- resample(grizzinc.reproj, griz_dens, method='bilinear')
-
-# Crop to ONA:
-grizzinc.crop <- crop(grizzinc.rsmple, ona.proj.vec)
-
 
