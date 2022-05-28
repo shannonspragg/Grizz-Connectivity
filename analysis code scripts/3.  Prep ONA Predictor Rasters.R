@@ -113,14 +113,23 @@ names(dist.grizz.pop.raster)[names(dist.grizz.pop.raster) == "HANDLE"] <- "Dista
 
 
 ######################################## Check all our Rasters:
+
 # Check Projections: ------------------------------------------------------
    # Bear Density (BHS) Estimate:
 bhs.reproj <- terra::project(bhs.rast, crs(ona.buf.rast))
   # Biophys Map:
 biophys.reproj <- terra::project(biophys.rast, crs(ona.buf.rast))
+
   # Grizzinc:
-grizzinc.reproj <- terra::project(grizz.inc.comb, crs(ona.buf.rast))
+ona_proj.g <- ona.buffer %>% st_transform(., crs(grizz.inc.comb)) %>% st_buffer(., dist=5000) %>% as(., "Spatial")
+ona.vec <- vect(ona_proj.g)
+
+grizzinc.crop <- crop(grizz.inc.comb, ona.vec)
+grizzinc.reproj <- terra::project(grizzinc.crop, crs(ona.buf.rast))
+
   # Human Density:
+hm.dens.reproj <- terra::project(hm.dens, crs(ona.buf.rast))
+
 
 crs(ona.buf.rast) == crs(grizzinc.reproj) #TRUE
 crs(bhs.reproj) == crs(biophys.reproj) #TRUE
@@ -129,20 +138,17 @@ crs(bhs.reproj) == crs(biophys.reproj) #TRUE
   # Crop these Rasters to ONA extant:
 biophys.crop <- terra::crop(biophys.reproj, ona.buf.rast)
 
-  # Expand the grizz_dens extant to include WA:
-bhs.crop <- terra::crop(bhs.reproj, ona.buf.rast)
-
 # Resample to match extents and res:
 biophys.rsmple <- resample(biophys.crop, ona.buf.rast, method='bilinear')
 
-bhs.rsmple <- resample(bhs.crop, ona.buf.rast, method='bilinear')
-grizzinc.comb.rsmple <- resample(grizz.inc.comb, ona.buf.rast, method='bilinear')
-
+bhs.rsmple <- resample(bhs.reproj, ona.buf.rast, method='bilinear')
+grizzinc.comb.rsmple <- resample(grizzinc.reproj, ona.buf.rast, method='bilinear')
+hm.dens.rsmple <- resample(hm.dens.reproj, ona.buf.rast, method='bilinear')
 
 # Plot Check:
 ona.bound.vect <- vect(ona.buffer)
 
-plot(grizz.inc.comb)
+plot(grizzinc.comb.rsmple)
 plot(ona.bound.vect, add=TRUE)
 
 plot(biophys.rsmple)
@@ -151,12 +157,14 @@ plot(ona.bound.vect, add=TRUE)
 plot(bhs.rsmple)
 plot(ona.bound.vect, add=TRUE)
 
+plot(hm.dens.rsmple)
+plot(ona.bound.vect, add=TRUE)
 
 # Cut these down to the SOI Boundary: -------------------------------------
 
 grizzinc.ona <- terra::mask(grizzinc.comb.rsmple, ona.bound.vect) 
 biophys.ona <- terra::mask(biophys.rsmple, ona.bound.vect) 
-
+hm.dens.ona <- terra::mask(hm.dens.rsmple, ona.bound.vect) 
 bhs.ona <- terra::mask(bhs.rsmple, ona.bound.vect) 
 d2pa.ona <- terra::mask(dist.pa.raster, ona.bound.vect) 
 d2grizzpop.ona <- terra::mask(dist.grizz.pop.raster, ona.bound.vect) 
@@ -166,6 +174,7 @@ plot(biophys.ona)
 plot(bhs.ona)
 plot(d2pa.ona)
 plot(d2grizzpop.ona)
+plot(hm.dens.ona)
 
 # Fix the column names:
 names(grizzinc.ona)[names(grizzinc.ona) == "grizz.increase.map.fixed"] <- "Support for Grizzly Increase"
@@ -179,6 +188,7 @@ names(bhs.ona)[names(bhs.ona) == "Height"] <- "Bear Habitat Suitability (BHS)"
 terra::writeRaster(grizzinc.ona, "Data/processed/grizz_inc_ona.tif", overwrite=TRUE)
 terra::writeRaster(biophys.ona, "Data/processed/biophys_ona.tif", overwrite=TRUE)
 terra::writeRaster(biophys.norm.ona, "Data/processed/biophys_normalized_ona.tif", overwrite=TRUE)
+terra::writeRaster(hm.dens.ona, "Data/processed/hm_dens_ona.tif", overwrite=TRUE)
 
 terra::writeRaster(bhs.ona, "Data/processed/bhs_ona.tif", overwrite=TRUE)
 terra::writeRaster(d2pa.ona, "Data/processed/dist2pa_ona.tif", overwrite=TRUE) # already saved
