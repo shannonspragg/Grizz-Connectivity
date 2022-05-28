@@ -29,7 +29,7 @@ options(
 )
 
 
-# Download Original Data --------------------------------------------
+# Download Original Data -------------------------------------------- I don't know why, but this won't bring in all the date that's in the google drive folder
 folder_url <- "https://drive.google.com/drive/u/0/folders/1TOBdzYCxFlHDiWAjl094Bp59_DSFa8BK" # rasters and omniscape data
 folder <- drive_get(as_id(folder_url))
 gdrive_files <- drive_ls(folder)
