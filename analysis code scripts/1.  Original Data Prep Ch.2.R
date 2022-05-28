@@ -15,12 +15,12 @@ library(terra)
 library(units)
 library(googledrive)
 library(stringr)
-#install.packages("geosphere")
-#install.packages("lakemorpho")
 library(geosphere)
 library(lakemorpho)
 library(here)
-
+library(rgdal)
+library(tidyverse)
+library(measurements)
 
 # Load our Data with GoogleDrive: -----------------------------------------
 options(
@@ -39,46 +39,84 @@ lapply(gdrive_files$id, function(x) drive_download(as_id(x),
 
 # Bring in our Original Data --------------------------------------------
   # Ag Data:
-farm.type <- read.csv("/Users/shannonspragg/Grizz-Connectivity/Data/original/farm type_32100403.csv")
-animal.farm.wa <- read.csv("/Users/shannonspragg/Grizz-Connectivity/Data/original/Animal Farming WA.csv")
-crop.farm.wa <- read.csv("/Users/shannonspragg/Grizz-Connectivity/Data/original/Crop Farming WA.csv")
+farm.type <- read.csv("Data/original/farm type_32100403.csv")
+animal.farm.wa <- read.csv("Data/original/Animal Farming WA.csv")
+crop.farm.wa <- read.csv("Data/original/Crop Farming WA.csv")
 
   # Census Divisions (CCS and county):
-can.ccs.shp<-st_read("/Users/shannonspragg/Grizz-Connectivity/Data/original/lccs000b16a_e.shp")
-wa.county.shp <- st_read("/Users/shannonspragg/Grizz-Connectivity/Data/original/tl_2016_53_cousub.shp")
+can.ccs.shp<-st_make_valid(st_read("Data/original/lccs000b16a_e.shp"))
+wa.county.shp <- st_read("Data/original/tl_2016_53_cousub.shp")
 
   #Protected Areas:
-bc.pas <- st_read("/Users/shannonspragg/Grizz-Connectivity/Data/original/Parks_Combined2.shp")
-wa.desig <- st_read("/Users/shannonspragg/Grizz-Connectivity/Data/original/PADUS2_1Designation_StateWA.shp")
-wa.procs <- st_read("/Users/shannonspragg/Grizz-Connectivity/Data/original/PADUS2_1Proclamation_StateWA.shp")
+#bc.pas <- st_read(st_make_valid("Data/original/Parks_Combined2.shp"))
+wa.desig <- st_read("Data/original/PADUS2_1Designation_StateWA.shp")
+wa.procs <- st_read("Data/original/PADUS2_1Proclamation_StateWA.shp")
 
   # Grizzly Population Units:
-grizz.units <- st_read("/Users/shannonspragg/Grizz-Connectivity/Data/original/GBPU_BC_polygon.shp")
+grizz.units <- st_read("Data/original/GBPU_BC_polygon.shp")
 
   # Grizz Inc:
-grizz.inc.bc <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/original/grizz.increase.map.fixed.tif") #  the proportion of people within a census that 
+grizz.inc.bc <- rast("Data/original/grizz.increase.map.fixed.tif") #  the proportion of people within a census that 
 # grizz.inc.wa <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/original/grizz.increase.map.fixed.tif") #  the proportion of people within a census that 
 
   # Bear Density - Bear Habitat Suitability (BHS):
-can.provs <- st_read("/Users/shannonspragg/Grizz-Connectivity/Data/original/lpr_000b21a_e.shp")
+can.provs <- st_read("Data/original/lpr_000b21a_e.shp")
 
   # ONA Territory:
-ona.bound <- st_read("/Users/shannonspragg/Grizz-Connectivity/Data/original/ONA_TerritoryBound.shp") 
+ona.bound <- st_read("Data/original/ONA_TerritoryBound.shp") 
+
+# Check Validity:
+any(!st_is_valid(wa.county.shp)) #FALSE
+any(!st_is_valid(bc.pas)) #FALSE
+any(!st_is_valid(wa.desig)) #FALSE
+st_make_valid(wa.desig)
+any(!st_is_valid(wa.procs)) # FALSE
+st_make_valid(wa.procs)
+any(!st_is_valid(grizz.units)) # FALSE
+st_make_valid(can.provs)
+any(!st_is_valid(ona.bound )) # FALSE
+
+
+# Download PA Data: -------------------------------------------------------
+# Publication Data: Load in Canada Spatial Data ---------------------------------------------
+fgdb <- "/Users/shannonspragg/ONA_GRIZZ/CAN Spatial Data/CAN Protected Areas/CPCAD-BDCAPC_Dec2020.gdb"
+
+# List all feature classes in a file geodatabase
+subset(ogrDrivers(), grepl("GDB", name))
+fc_list <- ogrListLayers(fgdb)
+print(fc_list)
+
+# Read the feature class for PA shapes
+fc <- readOGR(dsn=fgdb,layer="CPCAD_Dec2020")
+fc.sf <- as(fc, "sf") 
+
+#  Filter to just BC:
+bc.PAs <- fc.sf %>% 
+  filter(., LOC_E == "British Columbia") %>% 
+  st_make_valid()
+
+# Filter by IUCN status (Muise et al., 2022 https://esajournals.onlinelibrary.wiley.com/doi/10.1002/eap.2603)
+bc.PAs.iucn.filtered <- bc.PAs %>% 
+  filter(., IUCN_CAT == "Ia" | IUCN_CAT == "Ib" | IUCN_CAT == "II" | IUCN_CAT == "IV")
+
+# Filter by PA's larger than 100 ha:
+bc.PAs.100.ha <- filter(bc.PAs.iucn.filtered, O_AREA > 100) 
+
 
 # Reproject & Prep ONA Boundary -------------------------------------------
   # We want to match our data to BC Albers
-ccs.reproj <- st_transform(can.ccs.shp, st_crs(bc.pas))
-wa.county.reproj <- st_transform(wa.county.shp, st_crs(bc.pas))
-wa.desig.reproj <- st_transform(wa.desig, st_crs(bc.pas))
-wa.proc.reproj <- st_transform(wa.procs, st_crs(bc.pas))
-grizzpop.reproj <- st_transform(grizz.units, st_crs(bc.pas))
-ona.reproj <- st_transform(ona.bound, st_crs(bc.pas))
-bc.pas.reproj <- st_transform(st_make_valid(bc.pas), st_crs(ona.reproj))
-can.provs.reproj <- st_transform(st_make_valid(can.provs), st_crs(bc.pas))
+bc.pas.reproj <- st_transform(st_make_valid(bc.PAs.100.ha), st_crs(ona.bound))
+ccs.reproj <- st_transform(can.ccs.shp, st_crs(ona.bound))
+wa.county.reproj <- st_transform(wa.county.shp, st_crs(ona.bound))
+wa.desig.reproj <- st_transform(wa.desig, st_crs(ona.bound))
+wa.proc.reproj <- st_transform(wa.procs, st_crs(ona.bound))
+grizzpop.reproj <- st_transform(grizz.units, st_crs(ona.bound))
+#ona.reproj <- st_transform(ona.bound, st_crs(ona.bound))
+can.provs.reproj <- st_transform(st_make_valid(can.provs), st_crs(ona.bound))
 
-st_crs(ccs.reproj) == st_crs(bc.pas) #TRUE
+st_crs(ccs.reproj) == st_crs(bc.pas.reproj) #TRUE
 st_crs(wa.county.reproj) == st_crs(wa.proc.reproj) #TRUE
-st_crs(grizzpop.reproj) == st_crs(ona.reproj) #TRUE
+st_crs(grizzpop.reproj) == st_crs(can.provs.reproj) #TRUE
 crs(griz.source) # NAD83 / BC Albers
 
 
@@ -89,35 +127,33 @@ ona.buffer <- ona.reproj %>%
   # Make our ONA template raster:
 ona.vect <- vect(ona.reproj)
 ona.buf <- vect(ona.buffer)
-grizz.inc.templ <- terra::project(grizz.inc.bc, crs(ona.buf))
-grizzinc.crop.t <- terra::crop(grizz.inc.templ, ona.buf)  
+ona.vect.p <- terra::project(ona.vect, crs(grizz.inc.bc))
+ona.buf.p <- terra::project(ona.buf, crs(grizz.inc.bc))
+grizzinc.crop.t <- terra::crop(grizz.inc.bc, ona.vect.p)  
+grizzinc.crop.b <- terra::crop(grizz.inc.bc, ona.buf.p)  
+
+ona.rast <- terra::rasterize(ona.vect.p, grizzinc.crop.t, field = "OBJECTID")
+ona.rast <- resample(ona.rast, grizzinc.crop.t, method='bilinear')
+ona.rast[sona.rast == 327] <- 0
+
+ona.buf.rast <- terra::rasterize(ona.buf.p, grizzinc.crop.b, field = "OBJECTID")
+ona.buf.rast <- resample(ona.buf.rast, grizzinc.crop.b, method='bilinear')
+ona.buf.rast[ona.buf.rast == 327] <- 0
 
 plot(grizzinc.crop.t)
 plot(ona.vect, add=TRUE)
 
-  # ONA territory:
-ona.rast.templ <- rast(ona.vect, nrows= 2027, ncols=1175, nlyrs=1, xmin=1340199, xmax=1658767, ymin=306186.8, ymax=855751.3)
-ona.rast <- terra::rasterize(ona.vect, ona.rast.templ, field = "HANDLE")
-ona.rast <- resample(ona.rast, grizzinc.crop.t, method='bilinear')
-ona.rast[ona.rast == 27] <- 0
-
-  # ONA Buffer:
-ona.buf.rast.templ <- rast(ona.buf, nrows= 2027, ncols=1175, nlyrs=1, xmin=1340199, xmax=1658767, ymin=306186.8, ymax=855751.3)
-ona.buf.rast <- terra::rasterize(ona.buf, ona.buf.rast.templ, field = "HANDLE")
-ona.buf.rast <- resample(ona.buf.rast, grizzinc.crop.t, method='bilinear')
-ona.buf.rast[ona.buf.rast == 27] <- 0
-
   # Export as tiff:
-terra::writeRaster(ona.rast, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/ona_bound.tif")
-terra::writeRaster(ona.buf.rast, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/ona_buf_bound.tif")
-st_write(ona.buffer, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/ona_buffer_bound.shp")
+terra::writeRaster(ona.rast, "Data/processed/ona_bound.tif")
+terra::writeRaster(ona.buf.rast, "Data/processed/ona_buf_bound.tif")
+st_write(ona.buffer, "Data/processed/ona_buffer_bound.shp")
 
   # Extract BC Boundary:
 bc.bound <-can.provs.reproj %>%
   filter(., PRNAME == "British Columbia / Colombie-Britannique") %>%
   st_make_valid()
 
-st_write(bc.bound, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/bc_bound.shp")
+st_write(bc.bound, "Data/processed/bc_bound.shp")
 
 ############################# Prep Agriculture Variables:
 ####################### Now, we will filter the CCS regions and Agriculture Data to BC:
@@ -133,7 +169,7 @@ bc.ccs<-can.ccs.sf %>%
   st_make_valid()
 
 # Save this for later:
-st_write(bc.ccs, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/BC CCS.shp")
+st_write(bc.ccs, "Data/processed/BC CCS.shp")
 
 # Filter the Ag Files down to just BC districts: --------------------------
 # See here: https://www.statology.org/filter-rows-that-contain-string-dplyr/  searched: 'Return rows with partial string, filter dplyr'
@@ -147,11 +183,9 @@ bc.farm.filter.ccs<-farm.type.bc %>%
 unique(farm.type.bc$North.American.Industry.Classification.System..NAICS.) # There are 43 unique farm types in BC
 
 # Filter for just the 2016 census results (the data had 2011 and 2016):
-bc.farm.2016.ccs<-bc.farm.filter.ccs %>%
-  filter(., grepl("2016", bc.farm.filter.ccs$REF_DATE)) # Now there are 344 observations
 
-bc.farm.2016.ccs$CCSUID.crop<- str_sub(bc.farm.2016.ccs$GEO,-6,-2) # Now we have a matching 6 digits
-unique(bc.farm.2016.ccs$CCSUID.crop) #This is a 5 digit code
+bc.farm.2016.ccs<-bc.farm.filter.ccs %>%
+  filter(., REF_DATE == "2016") 
 
 # Editing CCS Code into new column for join -------------------------------
   # Here we separate out the CCS code into new column for join with CCS .shp:
@@ -174,27 +208,45 @@ unique(crop.farm.wa$County.ANSI)
 head(wa.county.reproj) # Check out our WA county data
 
   # Join the BC CCS with Ag Files:
-farm.ccs.join <- merge(bc.farm.2016.ccs, bc.ccs, by.x = "CCSUID.crop", by.y = "CCSUID.crop") 
-wa.animal.join <- merge(animal.farm.wa, wa.county.reproj, by.x = "County.ANSI", by.y = "CountyID") 
-wa.crop.join <- merge(crop.farm.wa, wa.county.reproj, by.x = "County.ANSI", by.y = "CountyID") 
+#farm.ccs.join <- merge(bc.farm.2016.ccs, bc.ccs, by.x = "CCSUID.crop", by.y = "CCSUID.crop") 
+#wa.animal.join <- merge(animal.farm.wa, wa.county.reproj, by.x = "County.ANSI", by.y = "CountyID") 
+# wa.crop.join <- merge(crop.farm.wa, wa.county.reproj, by.x = "County.ANSI", by.y = "CountyID") 
+
+farm.ccs.join <- bc.ccs %>% 
+  left_join(., bc.farm.2016.ccs, by = c("CCSUID.crop" = "CCSUID.crop"))
+wa.animal.join <- wa.county.reporj %>% 
+  left_join(., animal.farm.wa, by = c("County.ANSI" = "CountyID"))
+wa.crop.join <- wa.county.reporj %>% 
+  left_join(., crop.farm.wa, by = c("County.ANSI" = "CountyID"))
+
 
   # Double check that this is the correct structure:
-farm.ccs.sf <- st_as_sf(farm.ccs.join)
-wa.animal.sf <- st_as_sf(wa.animal.join)
-wa.crop.sf <- st_as_sf(wa.crop.join)
+# farm.ccs.sf <- st_as_sf(farm.ccs.join)
+# wa.animal.sf <- st_as_sf(wa.animal.join)
+# wa.crop.sf <- st_as_sf(wa.crop.join)
 
-head(farm.ccs.sf) # Here we have a farm type data frame with Multi-polygon geometry - check!
-head(wa.animal.sf)
+# head(farm.ccs.sf) # Here we have a farm type data frame with Multi-polygon geometry - check!
+# head(wa.animal.sf)
 
 # Here we subset the farm data to ONA, and pull out the total farm counts: ---------------------------------
   # Start by cropping the data down to ONA buffer:
-farm.ccs.sf <- st_transform(farm.ccs.sf, st_crs(ona.reproj))
-wa.animal.sf <- st_transform(wa.animal.sf, st_crs(ona.reproj))
-wa.crop.sf <- st_transform(wa.crop.sf, st_crs(ona.reproj))
+# farm.ccs.sf <- st_transform(farm.ccs.sf, st_crs(ona.reproj))
+# wa.animal.sf <- st_transform(wa.animal.sf, st_crs(ona.reproj))
+# wa.crop.sf <- st_transform(wa.crop.sf, st_crs(ona.reproj))
+
+farm.ccs.sf <- st_transform(farm.ccs.join, st_crs(ona.reproj))
+wa.animal.sf <- st_transform(wa.animal.join, st_crs(ona.reproj))
+wa.crop.sf <- st_transform(wa.crop.join, st_crs(ona.reproj))
+
   # Crop these to ONA:
-farm.ccs.bc.ona <- st_intersection(farm.ccs.sf, ona.buffer) 
-animal.farms.ona <- st_intersection(wa.animal.sf, ona.buffer) 
-crop.farms.ona <- st_intersection(wa.crop.sf, ona.buffer) 
+# farm.ccs.bc.ona <- st_intersection(farm.ccs.sf, ona.buffer) 
+# animal.farms.ona <- st_intersection(wa.animal.sf, ona.buffer) 
+# crop.farms.ona <- st_intersection(wa.crop.sf, ona.buffer) 
+# crop.farms.ona$Value <- as.integer(crop.farms.ona$Value)
+
+farm.ccs.ona <- farm.ccs.sf[st_intersects(ona.reproj, farm.ccs.sf, sparse =  FALSE),]
+animal.farms.ona <- wa.animal.sf[st_intersects(ona.reproj, wa.animal.sf, sparse =  FALSE),]
+crop.farms.ona <- wa.crop.sf[st_intersects(ona.reproj, wa.crop.sf, sparse =  FALSE),]
 crop.farms.ona$Value <- as.integer(crop.farms.ona$Value)
 
 
@@ -206,63 +258,66 @@ farm.ona.subset <- subset(farm.ccs.bc.ona, North.American.Industry.Classificatio
 names(farm.ona.subset)[names(farm.ona.subset) == "North.American.Industry.Classification.System..NAICS."] <- "N_A_I_C"
 
   # Condense Farm Types to Animal & Ground Crop Production:
-animal.product.farming <- dplyr::filter(farm.ona.subset, N_A_I_C == "Beef cattle ranching and farming, including feedlots [112110]" | N_A_I_C == "Cattle ranching and farming [1121]" 
-                                        | N_A_I_C == "Dairy cattle and milk production [112120]" | N_A_I_C == "Hog and pig farming [1122]" | N_A_I_C == "Poultry and egg production [1123]"
-                                        | N_A_I_C == "Chicken egg production [112310]" | N_A_I_C == "Broiler and other meat-type chicken production [112320]" | N_A_I_C == "Turkey production [112330]"
-                                        | N_A_I_C == "Poultry hatcheries [112340]" | N_A_I_C == "Combination poultry and egg production [112391]" | N_A_I_C == "All other poultry production [112399]"
-                                        | N_A_I_C == "Sheep and goat farming [1124]" | N_A_I_C == "Sheep farming [112410]" | N_A_I_C == "Goat farming [112420]" | N_A_I_C =="Other animal production [1129]"
-                                        | N_A_I_C == "Apiculture [112910]" | N_A_I_C == "Horse and other equine production [112920]" | N_A_I_C == "Fur-bearing animal and rabbit production [112930]"
-                                        | N_A_I_C == "Animal combination farming [112991]" | N_A_I_C == "All other miscellaneous animal production [112999]") 
+animal.product.farming <- dplyr::filter(farm.soi.subset,  N_A_I_C == "Cattle ranching and farming [1121]" | N_A_I_C == "Hog and pig farming [1122]" | N_A_I_C == "Poultry and egg production [1123]"| N_A_I_C == "Sheep and goat farming [1124]" | N_A_I_C =="Other animal production [1129]") 
 
 
-ground.crop.production <- dplyr::filter(farm.ona.subset, N_A_I_C == "Fruit and tree nut farming [1113]" | N_A_I_C == "Greenhouse, nursery and floriculture production [1114]" | N_A_I_C == "Vegetable and melon farming [1112]"
-                                        | N_A_I_C == "Oilseed and grain farming [1111]" | N_A_I_C == "Soybean farming [111110]" | N_A_I_C == "Oilseed (except soybean) farming [111120]"
-                                        | N_A_I_C == "Dry pea and bean farming [111130]" | N_A_I_C == "Wheat farming [111140]" | N_A_I_C == "Corn farming [111150]" | N_A_I_C == "Other grain farming [111190]"
-                                        | N_A_I_C == "Potato farming [111211]" | N_A_I_C == "Other vegetable (except potato) and melon farming [111219]" | N_A_I_C == "Mushroom production [111411]" 
-                                        | N_A_I_C == "Other food crops grown under cover [111419]" | N_A_I_C == "Nursery and tree production [111421]" | N_A_I_C == "Floriculture production [111422]" 
-                                        | N_A_I_C == "Other crop farming [1119]" | N_A_I_C == "Tobacco farming [111910]" | N_A_I_C == "Hay farming [111940]" | N_A_I_C == "Fruit and vegetable combination farming [111993]"
-                                        | N_A_I_C == "Maple syrup and products production [111994]" | N_A_I_C == "All other miscellaneous crop farming [111999]" )
+ground.crop.production <- dplyr::filter(farm.soi.subset, N_A_I_C == "Fruit and tree nut farming [1113]" | N_A_I_C == "Greenhouse, nursery and floriculture production [1114]" | N_A_I_C == "Vegetable and melon farming [1112]"
+                                        | N_A_I_C == "Oilseed and grain farming [1111]" | N_A_I_C == "Other crop farming [1119]")
 
   # Total the counts of these farm categories by CCS region:
-animal.prod.bc.counts <- aggregate(cbind(VALUE) ~ CCSUID, data= animal.product.farming, FUN=sum)
-ground.crop.bc.counts <- aggregate(cbind(VALUE) ~ CCSUID, data= ground.crop.production, FUN=sum)
+# animal.prod.bc.counts <- aggregate(cbind(VALUE) ~ CCSUID, data= animal.product.farming, FUN=sum)
+# ground.crop.bc.counts <- aggregate(cbind(VALUE) ~ CCSUID, data= ground.crop.production, FUN=sum)
+# 
+# animal.prod.wa.counts <- aggregate(cbind(Value) ~ County.ANSI, data= animal.farms.ona, FUN=sum)
+# ground.crop.wa.counts <- aggregate(cbind(Value) ~ County.ANSI, data= crop.farms.ona, FUN=sum)
 
-animal.prod.wa.counts <- aggregate(cbind(Value) ~ County.ANSI, data= animal.farms.ona, FUN=sum)
-ground.crop.wa.counts <- aggregate(cbind(Value) ~ County.ANSI, data= crop.farms.ona, FUN=sum)
+##MW: Using the group_by; summarize avoids having to rejoin data
+animal.prod.bc.sf <- animal.product.farming %>% 
+  group_by(CCSUID) %>% 
+  summarise(., "Total Farms in CCS" = sum(VALUE))
+ground.crop.bc.sf <- ground.crop.production %>% 
+  group_by(CCSUID) %>% 
+  summarise(., "Total Farms in CCS" = sum(VALUE))
+
+animal.prod.wa.sf <- animal.farms.ona %>% 
+  group_by(County.ANSI) %>% 
+  summarise(., "Total Farms in CCS" = sum(VALUE))
+ground.crop.wa.sf <- crop.farms.ona %>% 
+  group_by(CCSUID) %>% 
+  summarise(., "Total Farms in CCS" = sum(VALUE))
 
 
-names(animal.prod.bc.counts)[names(animal.prod.bc.counts) == "VALUE"] <- "Total Farms in CCS"
-names(ground.crop.bc.counts)[names(ground.crop.bc.counts) == "VALUE"] <- "Total Farms in CCS"
-names(animal.prod.wa.counts)[names(animal.prod.wa.counts) == "Value"] <- "Total Farms in County"
-names(ground.crop.wa.counts)[names(ground.crop.wa.counts) == "Value"] <- "Total Farms in County"
-
-  # Join this back to our data as a total column:
-animal.prod.bc.join <- merge(animal.prod.bc.counts, animal.product.farming, by.x = "CCSUID", by.y = "CCSUID") 
-ground.crop.bc.join <- merge(ground.crop.bc.counts, ground.crop.production, by.x = "CCSUID", by.y = "CCSUID") 
-animal.prod.wa.join <- merge(animal.prod.wa.counts, animal.farms.ona, by.x = "County.ANSI", by.y = "County.ANSI") 
-ground.crop.wa.join <- merge(ground.crop.wa.counts, crop.farms.ona, by.x = "County.ANSI", by.y = "County.ANSI") 
-
-animal.prod.bc.sf <- st_as_sf(animal.prod.bc.join)
-ground.crop.bc.sf <- st_as_sf(ground.crop.bc.join)
-animal.prod.wa.sf <- st_as_sf(animal.prod.wa.join)
-ground.crop.wa.sf <- st_as_sf(ground.crop.wa.join)
+# names(animal.prod.bc.counts)[names(animal.prod.bc.counts) == "VALUE"] <- "Total Farms in CCS"
+# names(ground.crop.bc.counts)[names(ground.crop.bc.counts) == "VALUE"] <- "Total Farms in CCS"
+# names(animal.prod.wa.counts)[names(animal.prod.wa.counts) == "Value"] <- "Total Farms in County"
+# names(ground.crop.wa.counts)[names(ground.crop.wa.counts) == "Value"] <- "Total Farms in County"
+# 
+#   # Join this back to our data as a total column:
+# animal.prod.bc.join <- merge(animal.prod.bc.counts, animal.product.farming, by.x = "CCSUID", by.y = "CCSUID") 
+# ground.crop.bc.join <- merge(ground.crop.bc.counts, ground.crop.production, by.x = "CCSUID", by.y = "CCSUID") 
+# animal.prod.wa.join <- merge(animal.prod.wa.counts, animal.farms.ona, by.x = "County.ANSI", by.y = "County.ANSI") 
+# ground.crop.wa.join <- merge(ground.crop.wa.counts, crop.farms.ona, by.x = "County.ANSI", by.y = "County.ANSI") 
+# 
+# animal.prod.bc.sf <- st_as_sf(animal.prod.bc.join)
+# ground.crop.bc.sf <- st_as_sf(ground.crop.bc.join)
+# animal.prod.wa.sf <- st_as_sf(animal.prod.wa.join)
+# ground.crop.wa.sf <- st_as_sf(ground.crop.wa.join)
 
 # Calculate the Density of Farm Types: ------------------------------------
   # We do so by dividing the count of farms by the overall area of the farm type categories (for our 10km buffered area, but save this to the 50km dataset 
   # so that we have values on the edge of our 10km zone):
 
-  # Calculate our areas for the two objects: 
-animal.prod.bc.sf$AREA_SQM <- st_area(animal.prod.bc.sf)
-ground.crop.bc.sf$AREA_SQM <- st_area(ground.crop.bc.sf)
-animal.prod.wa.sf$AREA_SQM <- st_area(animal.prod.wa.sf)
-ground.crop.wa.sf$AREA_SQM <- st_area(ground.crop.wa.sf)
+# Make our area units kilometers:
+animal.prod.bc.sf$AREA_SQ_KM <- set_units(st_area(animal.prod.bc.sf$AREA_SQM), km^2)
+ground.crop.bc.sf$AREA_SQ_KM <- set_units(st_area(ground.crop.bc.sf$AREA_SQM), km^2)
+animal.prod.wa.sf$AREA_SQ_KM <- set_units(st_area(animal.prod.wa.sf$AREA_SQM), km^2)
+ground.crop.wa.sf$AREA_SQ_KM <- set_units(st_area(ground.crop.wa.sf$AREA_SQM), km^2)
 
-
-  # Make our area units kilometers:
-animal.prod.bc.sf$AREA_SQ_KM <- set_units(animal.prod.bc.sf$AREA_SQM, km^2)
-ground.crop.bc.sf$AREA_SQ_KM <- set_units(ground.crop.bc.sf$AREA_SQM, km^2)
-animal.prod.wa.sf$AREA_SQ_KM <- set_units(animal.prod.wa.sf$AREA_SQM, km^2)
-ground.crop.wa.sf$AREA_SQ_KM <- set_units(ground.crop.wa.sf$AREA_SQM, km^2)
+#   # Calculate our areas for the two objects: 
+# animal.prod.bc.sf$AREA_SQM <- st_area(animal.prod.bc.sf)
+# ground.crop.bc.sf$AREA_SQM <- st_area(ground.crop.bc.sf)
+# animal.prod.wa.sf$AREA_SQM <- st_area(animal.prod.wa.sf)
+# ground.crop.wa.sf$AREA_SQM <- st_area(ground.crop.wa.sf)
 
 
   # Now we make a new col with our farms per sq km:
@@ -321,11 +376,11 @@ plot(st_geometry(animal.prod.ona))
 plot(st_geometry(ground.crop.ona))
 
 # Save these as .shp's for later:
-st_write(animal.prod.ona,"/Users/shannonspragg/Grizz-Connectivity/Data/processed/ONA Animal Product Farming.shp", overwrite=TRUE)
+st_write(animal.prod.ona,"Data/processed/ONA Animal Product Farming.shp", overwrite=TRUE)
 
-st_write(ground.crop.ona, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/ONA Ground Crop Production.shp", overwrite=TRUE) 
+st_write(ground.crop.ona, "Data/processed/ONA Ground Crop Production.shp", overwrite=TRUE) 
 
-st_write(animal.prod.ona,"/Users/shannonspragg/Grizz-Connectivity/Data/processed/ONA Census Districts.shp", overwrite=TRUE)
+st_write(animal.prod.ona,"Data/processed/ONA Census Districts.shp", overwrite=TRUE)
 
 ################################ Combine our Protected Area Datasets:
 
@@ -357,87 +412,6 @@ plot(st_geometry(ona.pas))
 st_write(ona.pas, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/ona_PAs.shp", overwrite=TRUE) 
 
 
-################################## Combine the Hydrology (Lake) Datasets:
-bc.lakes <- st_read("/Users/shannonspragg/ONA_GRIZZ/CAN Spatial Data/BC Hydrology/BCGW_7113060B_165298896733_5124/FWA_LAKES_POLY/FWLKSPL_polygon.shp")
-
-fgdb <- "/Users/shannonspragg/ONA_GRIZZ/CAN Spatial Data/WA Hydrology/hydro.gdb"
-
-  # List all feature classes in a file geodatabase
-subset(ogrDrivers(), grepl("GDB", name))
-fc_list <- ogrListLayers(fgdb)
-print(fc_list)
-
-  # Read the feature class for PA shapes
-fc <- readOGR(dsn=fgdb,layer="wbhydro")
-fc.sf <- as(fc, "sf") 
-
-  #  Filter to just LAKES:
-wa.lakes <- fc.sf %>% 
-  filter(., WB_HYDR_FTR_LABEL_NM == "Lake") %>% 
-  st_make_valid()
-
-  # Reproject data:
-wa.lakes.reproj <- st_transform(wa.lakes, st_crs(bc.pas))
-bc.lakes.reproj <- st_transform(bc.lakes, st_crs(bc.pas))
-
-  # Crop to ONA:
-bc.ona.lakes <- st_intersection(bc.lakes.reproj, ona.buffer) 
-wa.ona.lakes <- st_intersection(wa.lakes.reproj, ona.buffer) 
-
-  # Subset only the columns we need: ----------------------------------------
-wa.ona.lakes.subs <- wa.ona.lakes[, c("WB_HYDR_FTR_LABEL_NM", "SHAPE_Area", "ELEVATION" , "geometry" )]
-bc.ona.lakes.subs <- bc.ona.lakes[, c("WTRBDTP", "AREA_SQM", "ELEVATION", "geometry" )]
-
-names(wa.ona.lakes.subs)[names(wa.ona.lakes.subs) == "WB_HYDR_FTR_LABEL_NM"] <- "Hydro Type"
-names(wa.ona.lakes.subs)[names(wa.ona.lakes.subs) == "SHAPE_Area"] <- "AREA_SQM"
-names(bc.ona.lakes.subs)[names(bc.ona.lakes.subs) == "WTRBDTP"] <- "Hydro Type"
-
-  # Join the WA and BC PAs Data: -------------------------------------------------
-ona.lakes <- rbind(wa.ona.lakes.subs, bc.ona.lakes.subs)
-
-  # Filter size of lakes: for both female and male bears
-  # Female bears will cross up to 1.5km, male bears sometimes up to 6km
-female.resist.lakes <- ona.lakes %>% 
-  filter(., AREA_SQM > 1500) 
-
-male.resist.lakes <- ona.lakes %>% 
-  filter(., AREA_SQM > 6000) 
-
-average.resist.lakes <- ona.lakes %>% 
-  filter(., AREA_SQM > 3500) 
-
-
-#   Calculating Lake Width & Length: --------------------------------------
-
-  # Convert to lake object:
-ona.lakes.sp <- as(ona.lakes, "Spatial")
-ona.lakemorpho <- lakeMorphoClass(ona.lakes.sp)
-
-  # Prep Elevation Rasters:
-griz_dens <- rast(here("/Users/shannonspragg/Grizz-Connectivity/Data/original/grizz_dens.tif"))
-ona_vec <- vect(ona.buffer)
-
-elev.can <- rast(raster::getData('alt', country = 'CAN'))
-elev.us <- rast(raster::getData('alt', country = 'USA')[[1]])
-elev <- mosaic(elev.can, elev.us)
-
-elev.proj <- terra::project(elev, griz_dens, method="bilinear")
-elev.crop <- crop(elev.proj, ona_vec)
-
-  # Calculate Lake Metrics:
-ona.laketopo <- lakeSurroundTopo(ona.lakes.sp, elev.crop) # This only takes one lake input at a time....
-lakeMaxWidth(ona.lakemorpho, 50)
-
-
-  # Check this:
-plot(st_geometry(ona.lakes))
-
-st_write(ona.lakes, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/ona_lakes.shp", overwrite=TRUE) 
-st_write(female.resist.lakes, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/ona_lakes_female_resist.shp", overwrite=TRUE) 
-st_write(male.resist.lakes, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/ona_lakes_male_resist.shp", overwrite=TRUE) 
-st_write(average.resist.lakes, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/ona_lakes_avg_resist.shp", overwrite=TRUE) 
-
-
 ################################# Prep Grizzly Population Units:
 
 # Check Projections: ------------------------------------------------------
@@ -458,6 +432,88 @@ plot(st_geometry(extant.grizz))
 plot(st_geometry(ona.buffer), add=TRUE)
 
 # Save this for later:
-st_write(extant.grizz, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/Extant Grizzly Pop Units.shp", overwrite=TRUE) 
+st_write(extant.grizz, "Data/processed/Extant Grizzly Pop Units.shp", overwrite=TRUE) 
+
+
+# ################################## Combine the Hydrology (Lake) Datasets:
+# bc.lakes <- st_read("/Users/shannonspragg/ONA_GRIZZ/CAN Spatial Data/BC Hydrology/BCGW_7113060B_165298896733_5124/FWA_LAKES_POLY/FWLKSPL_polygon.shp")
+# 
+# fgdb <- "/Users/shannonspragg/ONA_GRIZZ/CAN Spatial Data/WA Hydrology/hydro.gdb"
+# 
+#   # List all feature classes in a file geodatabase
+# subset(ogrDrivers(), grepl("GDB", name))
+# fc_list <- ogrListLayers(fgdb)
+# print(fc_list)
+# 
+#   # Read the feature class for PA shapes
+# fc <- readOGR(dsn=fgdb,layer="wbhydro")
+# fc.sf <- as(fc, "sf") 
+# 
+#   #  Filter to just LAKES:
+# wa.lakes <- fc.sf %>% 
+#   filter(., WB_HYDR_FTR_LABEL_NM == "Lake") %>% 
+#   st_make_valid()
+# 
+#   # Reproject data:
+# wa.lakes.reproj <- st_transform(wa.lakes, st_crs(bc.pas))
+# bc.lakes.reproj <- st_transform(bc.lakes, st_crs(bc.pas))
+# 
+#   # Crop to ONA:
+# bc.ona.lakes <- st_intersection(bc.lakes.reproj, ona.buffer) 
+# wa.ona.lakes <- st_intersection(wa.lakes.reproj, ona.buffer) 
+# 
+#   # Subset only the columns we need: ----------------------------------------
+# wa.ona.lakes.subs <- wa.ona.lakes[, c("WB_HYDR_FTR_LABEL_NM", "SHAPE_Area", "ELEVATION" , "geometry" )]
+# bc.ona.lakes.subs <- bc.ona.lakes[, c("WTRBDTP", "AREA_SQM", "ELEVATION", "geometry" )]
+# 
+# names(wa.ona.lakes.subs)[names(wa.ona.lakes.subs) == "WB_HYDR_FTR_LABEL_NM"] <- "Hydro Type"
+# names(wa.ona.lakes.subs)[names(wa.ona.lakes.subs) == "SHAPE_Area"] <- "AREA_SQM"
+# names(bc.ona.lakes.subs)[names(bc.ona.lakes.subs) == "WTRBDTP"] <- "Hydro Type"
+# 
+#   # Join the WA and BC PAs Data: -------------------------------------------------
+# ona.lakes <- rbind(wa.ona.lakes.subs, bc.ona.lakes.subs)
+# 
+#   # Filter size of lakes: for both female and male bears
+#   # Female bears will cross up to 1.5km, male bears sometimes up to 6km
+# female.resist.lakes <- ona.lakes %>% 
+#   filter(., AREA_SQM > 1500) 
+# 
+# male.resist.lakes <- ona.lakes %>% 
+#   filter(., AREA_SQM > 6000) 
+# 
+# average.resist.lakes <- ona.lakes %>% 
+#   filter(., AREA_SQM > 3500) 
+# 
+# 
+# #   Calculating Lake Width & Length: --------------------------------------
+# 
+#   # Convert to lake object:
+# ona.lakes.sp <- as(ona.lakes, "Spatial")
+# ona.lakemorpho <- lakeMorphoClass(ona.lakes.sp)
+# 
+#   # Prep Elevation Rasters:
+# griz_dens <- rast(here("/Users/shannonspragg/Grizz-Connectivity/Data/original/grizz_dens.tif"))
+# ona_vec <- vect(ona.buffer)
+# 
+# elev.can <- rast(raster::getData('alt', country = 'CAN'))
+# elev.us <- rast(raster::getData('alt', country = 'USA')[[1]])
+# elev <- mosaic(elev.can, elev.us)
+# 
+# elev.proj <- terra::project(elev, griz_dens, method="bilinear")
+# elev.crop <- crop(elev.proj, ona_vec)
+# 
+#   # Calculate Lake Metrics:
+# ona.laketopo <- lakeSurroundTopo(ona.lakes.sp, elev.crop) # This only takes one lake input at a time....
+# lakeMaxWidth(ona.lakemorpho, 50)
+# 
+# 
+#   # Check this:
+# plot(st_geometry(ona.lakes))
+# 
+# st_write(ona.lakes, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/ona_lakes.shp", overwrite=TRUE) 
+# st_write(female.resist.lakes, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/ona_lakes_female_resist.shp", overwrite=TRUE) 
+# st_write(male.resist.lakes, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/ona_lakes_male_resist.shp", overwrite=TRUE) 
+# st_write(average.resist.lakes, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/ona_lakes_avg_resist.shp", overwrite=TRUE) 
+
 
 
