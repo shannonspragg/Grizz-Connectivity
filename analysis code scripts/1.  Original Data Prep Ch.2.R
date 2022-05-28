@@ -440,7 +440,6 @@ st_write(extant.grizz, "Data/processed/Extant Grizzly Pop Units.shp", append=FAL
 ################################# Prep Human Density Predictor:
 
 # Reproject the Data: --------------------------------------------------
-##MW: I am not reprojecting the data here as that doesn't seem necessary yet and it's not clear what the new resolution should be
 ona.buf.reproj <- project(ona.buf, world.hum.dens)
 world.dens.crop <- crop(world.hum.dens, ona.buf.reproj)
 
