@@ -61,15 +61,6 @@ rough.rescale[rough.rescale==0] <- 0.000000001
 rough.rescale[is.nan(rough.rescale)] <- 1
 
 
-  # Project grizz resistance:
-griz.comb.proj <- terra::project(grizz.inc.comb, griz.ext, method="bilinear")
-griz.inc.crop <- elev.crop <- crop(griz.comb.proj, griz.ext)
-griz.resist <- 1-griz.inc.crop
-griz.resist[is.nan(griz.resist)] <- 1
-
-  # Invert Grizz dens raster:
-griz.ext.inv <- 1/(griz.ext)
-
 # Scale Grizz Extents: don't need this bc this is in our source strength input
 griz.ext.min <-global(griz.ext.inv, "min", na.rm=TRUE)[1,]
 griz.ext.max <- global(griz.ext.inv, "max", na.rm=TRUE)[1,] 
@@ -100,8 +91,11 @@ grizzinc.rsmple <- resample(grizzinc.reproj, griz_dens, method='bilinear')
 grizzinc.crop <- crop(grizzinc.rsmple, ona.proj.vect)
 
   # Project it back to match others:
-grizz.resist.crop <- terra::project(grizzinc.crop, ona_proj.vec)
+grizz.inc.crop <- terra::project(grizzinc.crop, ona_proj.vec)
 
+# Project grizz resistance:
+griz.resist <- 1-grizz.inc.crop
+griz.resist[is.nan(griz.resist)] <- 1
 
 # Fuzzysum Our Rasters: ---------------------------------------------------
 
@@ -122,7 +116,7 @@ fuzzysum3 <- function(r1, r2, r3) {
   fuz.sum <- 1-(rc1.1m*rc2.1m*rc3.1m)
 }
 # Add together our biophys attributes + grizz inc resist: gHM, and roughness + grizz resist
-bio_social_fuzzysum <- fuzzysum3(hmi.rescale, rough.rescale, grizz.resist.crop)
+bio_social_fuzzysum <- fuzzysum3(hmi.rescale, rough.rescale, griz.resist)
 
   # Make into resistance surface
 biophys_resistance <- (1+biophys_fuzsum)^10
@@ -133,11 +127,10 @@ plot(biophys_resistance, col=plasma(256), axes = TRUE, main = "Biophysical Resis
 biophys.resist.reproj <- terra::project(biophys_resistance, griz_dens)
 grizz.crop.reproj <- terra::project(grizz.crop, griz_dens)
  
-writeRaster(grizz.inc.comb, "Data/processed/grizz_inc_comb.tif")
+writeRaster(grizz.inc.combine, "Data/processed/grizz_inc_comb.tif")
 writeRaster(rough.rescale, filename=here("data/processed/rough_rescale.tif"), overwrite=TRUE)
 writeRaster(hmi.rescale, filename=here("data/processed/hmi_resist.tif"), overwrite=TRUE)
-writeRaster(grizz.crop.reproj, filename=here("data/processed/griz_source_ona.tif"), overwrite=TRUE)
-writeRaster(biophys.resist.reproj, filename=here("data/processed/biophys_resist.tif"), overwrite=TRUE)
+  # Omniscape Inputs:
+writeRaster(grizz.crop.reproj, filename=here("data/processed/griz_source_ona.tif"), overwrite=TRUE) # source input
+writeRaster(biophys.resist.reproj, filename=here("data/processed/biophys_resist.tif"), overwrite=TRUE) # resistance input
 
-writeRaster(biophys.hii, filename=here("data/processed/biophys_hii_resist.tif"), overwrite=TRUE)
-writeRaster(biophys.hmi, filename=here("data/processed/biophys_hmi_resist.tif"), overwrite=TRUE)
