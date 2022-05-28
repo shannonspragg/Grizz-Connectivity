@@ -18,7 +18,7 @@ animal.prod.ona <- st_read("Data/processed/ONA Animal Product Farming.shp")
 ground.crop.ona <- st_read("Data/processed/ONA Ground Crop Production.shp")
 
   # Grizzinc: 
-#grizz.inc.comb <- rast("Data/processed/grizz.inc.combtif") #  the proportion of people within a census that 
+grizz.inc.comb <- rast("Data/processed/grizz.inc.comb.tif") #  the proportion of people within a census that 
 
   # Bear Density - Bear Habitat Suitability (BHS):
 bhs.rast <- rast("Data/processed/grizz_source_ona.tif")
