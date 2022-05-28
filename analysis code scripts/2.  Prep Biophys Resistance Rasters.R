@@ -98,11 +98,9 @@ grizzinc.rsmple <- resample(grizzinc.reproj, griz_dens, method='bilinear')
 
   # Crop to ONA:
 grizzinc.crop <- crop(grizzinc.rsmple, ona.proj.vect)
-#grizzinc.ona <- terra::mask(grizzinc.crop, ona.proj.vect)
 
   # Project it back to match others:
 grizz.resist.crop <- terra::project(grizzinc.crop, ona_proj.vec)
-
 
 
 # Fuzzysum Our Rasters: ---------------------------------------------------
@@ -133,16 +131,12 @@ plot(biophys_resistance, col=plasma(256), axes = TRUE, main = "Biophysical Resis
 
 # Reproject other Raster to BC Albers: ---------------------------------------
 biophys.resist.reproj <- terra::project(biophys_resistance, griz_dens)
-
+grizz.crop.reproj <- terra::project(grizz.crop, griz_dens)
  
 writeRaster(grizz.inc.comb, "Data/processed/grizz_inc_comb.tif")
 writeRaster(rough.rescale, filename=here("data/processed/rough_rescale.tif"), overwrite=TRUE)
 writeRaster(hmi.rescale, filename=here("data/processed/hmi_resist.tif"), overwrite=TRUE)
-writeRaster(griz.rescale, filename=here("data/processed/griz_rescale_resist.tif"), overwrite=TRUE)
-writeRaster(griz.ext, filename=here("data/processed/griz_source.tif"), overwrite=TRUE)
-writeRaster(griz.ext.invert, filename=here("data/processed/griz_resist.tif"), overwrite=TRUE)
-writeRaster(griz.ext.inv, filename=here("data/processed/griz_resist_recip.tif"), overwrite=TRUE)
-
+writeRaster(grizz.crop.reproj, filename=here("data/processed/griz_source_ona.tif"), overwrite=TRUE)
 writeRaster(biophys.resist.reproj, filename=here("data/processed/biophys_resist.tif"), overwrite=TRUE)
 
 writeRaster(biophys.hii, filename=here("data/processed/biophys_hii_resist.tif"), overwrite=TRUE)

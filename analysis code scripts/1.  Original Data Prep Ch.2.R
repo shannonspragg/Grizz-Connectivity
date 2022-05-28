@@ -79,7 +79,7 @@ any(!st_is_valid(ona.bound )) # FALSE
 
 # Download PA Data: -------------------------------------------------------
 # Publication Data: Load in Canada Spatial Data ---------------------------------------------
-fgdb <- "/Users/shannonspragg/ONA_GRIZZ/CAN Spatial Data/CAN Protected Areas/CPCAD-BDCAPC_Dec2020.gdb"
+fgdb <- "Data/original/CPCAD-BDCAPC_Dec2020.gdb"
 
 # List all feature classes in a file geodatabase
 subset(ogrDrivers(), grepl("GDB", name))
