@@ -14,18 +14,18 @@ library(measurements)
 # Load Data: --------------------------------------------------------------
 
   # Animal & Crop Farms:
-animal.prod.ona <- st_read("/Users/shannonspragg/Grizz-Connectivity/Data/processed/ONA Animal Product Farming.shp")
-ground.crop.ona <- st_read("/Users/shannonspragg/Grizz-Connectivity/Data/processed/ONA Ground Crop Production.shp")
+animal.prod.ona <- st_read("Data/processed/ONA Animal Product Farming.shp")
+ground.crop.ona <- st_read("Data/processed/ONA Ground Crop Production.shp")
 
   # Grizzinc: 
-grizz.inc.comb <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/processed/grizz.inc.combtif") #  the proportion of people within a census that 
+grizz.inc.comb <- rast("Data/processed/grizz.inc.combtif") #  the proportion of people within a census that 
 
   # Bear Density - Bear Habitat Suitability (BHS):
-bhs.rast <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/original/grizz_dens.tif")
+bhs.rast <- rast("Data/processed/grizz_dsource_ona.tif")
 
   # Biophysical Current Map (Cumulative current flow shows the total current for each landscape pixel):
-biophys.rast <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/original/soi_cum_currmap.tif") 
-biophys.norm.rast <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/original/soi_biophys_normalized_cum_currmap.tif") 
+biophys.rast <- rast("Data/original/soi_cum_currmap.tif") 
+biophys.norm.rast <- rast("Data/original/soi_biophys_normalized_cum_currmap.tif") 
 
   # SOI Region for plotting:
 ona.buffer <- st_read("/Users/shannonspragg/Grizz-Connectivity/Data/processed/ona_buffer_bound.shp") 
@@ -126,11 +126,6 @@ grizzinc.reproj <- terra::project(grizz.inc.comb, crs(ona.buf.rast))
 crs(ona.buf.rast) == crs(grizzinc.reproj) #TRUE
 crs(bhs.reproj) == crs(biophys.reproj) #TRUE
 
-  # Replace NA Values with Mean for BHS:
-bhs.raster <- bhs.reproj %>% raster() # change to raster for cellstats
-cellStats(bhs.raster, mean) #Find the mean --> [1] 0.02256369
-
-bhs.no.na <- classify(bhs.reproj, cbind(NA, 0.02256369))
 
   # Crop these Rasters to ONA extant:
 biophys.crop <- terra::crop(biophys.reproj, ona.buf.rast)

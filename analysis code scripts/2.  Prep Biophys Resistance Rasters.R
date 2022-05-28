@@ -16,7 +16,7 @@ library(viridis)
 
 # Bring in Data: ----------------------------------------------------------
   #Creating the raster file objects pulled down from the data folder
-ona_bdry <- st_read(here("/Data/original/ONA_TerritoryBound.shp")) 
+ona_bdry <- st_read(here("Data/original/ONA_TerritoryBound.shp")) 
 griz_dens <- rast(here("Data/original/grizz_dens.tif"))
 hii <- rast("Data/original/hii_n_amer/")
 hmi <- rast("Data/original/gHMv1_300m_2017_static/gHMv1_300m_2017_static-0000000000-0000000000.tif")
@@ -36,16 +36,26 @@ griz_proj <- terra::project(griz_dens, hmi)
 ona_proj.sp <- ona_bdry %>% st_transform(., crs(griz_proj)) %>% st_buffer(., dist=5000) %>% as(., "Spatial")
 ona_proj.vec <- vect(ona_proj.sp)
 
+ona_proj <- ona_bdry %>% st_transform(., crs(griz_dens)) %>% st_buffer(., dist=5000) %>% as(., "Spatial")
+ona_proj.vect <- vect(ona_proj)
+
 
 # Prep Other Rasters: -----------------------------------------------------
 
   # Expand grizz_dens extent:
-griz.ext <- terra::extend(griz_dens, ona_proj.vec, filename=here("data/processed/griz_ext.tif"), overwrite=TRUE)
-griz.ext[is.nan(griz.ext)] <- 0
+griz.ext <- terra::extend(griz_proj, ona_proj.vec, filename=here("data/processed/griz_ext.tif"), overwrite=TRUE)
+#griz.ext[is.nan(griz.ext)] <- 0
 
   # Project & Crop HMI:
-hmi.crop <- crop(hmi.proj, ona_proj.vec)
+hmi.crop <- crop(hmi, ona_proj.vec)
 grizz.crop <- crop(griz.ext, ona_proj.vec)
+
+  # Apply Mean to BHS NA's:
+# Replace NA Values with Mean for BHS:
+griz.raster <- grizz.crop %>% raster() # change to raster for cellstats
+cellStats(griz.raster, mean) #Find the mean --> [1] 0.01646741
+
+griz.crop.mean <- classify(grizz.crop, cbind(NA, 0.01646741))
 
   # Rescale HMI:
 hmi.rescale <- hmi.crop / 65536
@@ -61,41 +71,17 @@ rough.rescale[rough.rescale==0] <- 0.000000001
 rough.rescale[is.nan(rough.rescale)] <- 1
 
 
-# Scale Grizz Extents: don't need this bc this is in our source strength input
-griz.ext.min <-global(griz.ext.inv, "min", na.rm=TRUE)[1,]
-griz.ext.max <- global(griz.ext.inv, "max", na.rm=TRUE)[1,] 
-griz.rescale <- (griz.ext.inv - griz.ext.min) / (griz.ext.max - griz.ext.min)
-griz.rescale[griz.rescale == 0] <- 0.000000001
-griz.rescale[is.nan(griz.rescale)] <- 1
-
-# Prep Grizzinc Raster: ------------------------------------------------------
-ona_proj <- ona_bdry %>% st_transform(., crs(grizz.inc.bc)) %>% st_buffer(., dist=5000) %>% as(., "Spatial")
-ona_proj.vect <- vect(ona_proj)
-
-  # Combine GrizzInc Maps:
-grizz.inc.combine <- terra::merge(grizz.inc.bc, grizz.inc.wa)
-
-  # Crop to ONA:
-grizz.inc.crop <- terra::crop(grizz.inc.combine, ona_proj.vect)
-
-  # Reproject Raster:
-ona_proj <- ona_bdry %>% st_transform(., crs(griz_dens)) %>% st_buffer(., dist=5000) %>% as(., "Spatial")
-ona.proj.vect <- vect(ona_proj)
-
-grizzinc.reproj <- terra::project(grizz.inc.crop, griz_dens)
-
-  # Resample
-grizzinc.rsmple <- resample(grizzinc.reproj, griz_dens, method='bilinear')
-
-  # Crop to ONA:
-grizzinc.crop <- crop(grizzinc.rsmple, ona.proj.vect)
-
-  # Project it back to match others:
-grizz.inc.crop <- terra::project(grizzinc.crop, ona_proj.vec)
-
-# Project grizz resistance:
-griz.resist <- 1-grizz.inc.crop
-griz.resist[is.nan(griz.resist)] <- 1
+# # Prep Grizzinc Raster: ------------------------------------------------------
+# ona_proj <- ona_bdry %>% st_transform(., crs(grizz.inc.bc)) %>% st_buffer(., dist=5000) %>% as(., "Spatial")
+# ona_proj.vect <- vect(ona_proj)
+# 
+#   # Combine GrizzInc Maps:
+# grizz.inc.combine <- terra::merge(grizz.inc.bc, grizz.inc.wa)
+# grizzinc.resample <- terra::resample(grizz.inc.combine, hmi.crop)
+# 
+# # Project grizz resistance:
+# griz.resist <- 1-grizzinc.resample
+# griz.resist[is.nan(griz.resist)] <- 1
 
 # Fuzzysum Our Rasters: ---------------------------------------------------
 
@@ -109,14 +95,14 @@ fuzzysum2 <- function(r1, r2) {
 biophys_fuzsum <- fuzzysum2(hmi.rescale, rough.rescale)
 plot(biophys_fuzsum, col=plasma(256), axes = TRUE, main = "BHS+gHM Resistance Layer")
 
-fuzzysum3 <- function(r1, r2, r3) {
-  rc1.1m <- (1-r1)
-  rc2.1m <- (1-r2)
-  rc3.1m <- (1-r3)
-  fuz.sum <- 1-(rc1.1m*rc2.1m*rc3.1m)
-}
-# Add together our biophys attributes + grizz inc resist: gHM, and roughness + grizz resist
-bio_social_fuzzysum <- fuzzysum3(hmi.rescale, rough.rescale, griz.resist)
+# fuzzysum3 <- function(r1, r2, r3) {
+#   rc1.1m <- (1-r1)
+#   rc2.1m <- (1-r2)
+#   rc3.1m <- (1-r3)
+#   fuz.sum <- 1-(rc1.1m*rc2.1m*rc3.1m)
+# }
+# # Add together our biophys attributes + grizz inc resist: gHM, and roughness + grizz resist
+# bio_social_fuzzysum <- fuzzysum3(hmi.rescale, rough.rescale, griz.resist)
 
   # Make into resistance surface
 biophys_resistance <- (1+biophys_fuzsum)^10
@@ -125,12 +111,15 @@ plot(biophys_resistance, col=plasma(256), axes = TRUE, main = "Biophysical Resis
 
 # Reproject other Raster to BC Albers: ---------------------------------------
 biophys.resist.reproj <- terra::project(biophys_resistance, griz_dens)
-grizz.crop.reproj <- terra::project(grizz.crop, griz_dens)
- 
+grizz.crop.reproj <- terra::project(griz.crop.mean, griz_dens)
+
+biophys.resist.crop <- crop(biophys.resist.reproj, ona.proj.vect)
+grizz.crop <- crop(grizz.crop.reproj, ona.proj.vect)
+
 writeRaster(grizz.inc.combine, "Data/processed/grizz_inc_comb.tif")
 writeRaster(rough.rescale, filename=here("data/processed/rough_rescale.tif"), overwrite=TRUE)
 writeRaster(hmi.rescale, filename=here("data/processed/hmi_resist.tif"), overwrite=TRUE)
   # Omniscape Inputs:
-writeRaster(grizz.crop.reproj, filename=here("data/processed/griz_source_ona.tif"), overwrite=TRUE) # source input
-writeRaster(biophys.resist.reproj, filename=here("data/processed/biophys_resist.tif"), overwrite=TRUE) # resistance input
+writeRaster(grizz.crop, filename=here("data/processed/griz_source_ona.tif"), overwrite=TRUE) # source input
+writeRaster(biophys.resist.crop, filename=here("data/processed/biophys_resist.tif"), overwrite=TRUE) # resistance input
 
