@@ -126,29 +126,32 @@ ona.vect <- vect(ona.reproj)
 ona.buf <- vect(ona.buffer)
 ona.vect.p <- terra::project(ona.vect, crs(grizz.inc.bc))
 ona.buf.p <- terra::project(ona.buf, crs(grizz.inc.bc))
-grizzinc.crop.t <- terra::crop(grizz.inc.bc, ona.vect.p)  
-grizzinc.crop.b <- terra::crop(grizz.inc.bc, ona.buf.p)  
+griz.inc.ext <- terra::extend(grizz.inc.bc, ona.buf.p, overwrite=TRUE)
+griz.inc.ext[is.nan(griz.inc.ext)] <- 0
+
+grizzinc.crop.t <- terra::crop(griz.inc.ext, ona.vect.p)  
+grizzinc.crop.b <- terra::crop(griz.inc.ext, ona.buf.p)  
 
 ona.rast <- terra::rasterize(ona.vect.p, grizzinc.crop.t, field = "ENTITY")
 ona.rast <- resample(ona.rast, grizzinc.crop.t, method='bilinear')
-#ona.rast[sona.rast == 327] <- 0
 
 ona.buf.rast <- terra::rasterize(ona.buf.p, grizzinc.crop.b, field = "ENTITY")
 ona.buf.rast <- resample(ona.buf.rast, grizzinc.crop.b, method='bilinear')
-#ona.buf.rast[ona.buf.rast == 327] <- 0
 
+  # Reproject to BC Albers:
+ona.buf.rast <- terra::project(ona.buf.rast, ona.buf)
+ona.rast <- terra::project(ona.rast, ona.buf)
 
   # Export as tiff:
-terra::writeRaster(ona.rast, "Data/processed/ona_bound.tif")
-terra::writeRaster(ona.buf.rast, "Data/processed/ona_buf_bound.tif")
-st_write(ona.buffer, "Data/processed/ona_buffer_bound.shp")
+terra::writeRaster(ona.rast, "Data/processed/ona_bound.tif", overwrite=TRUE)
+terra::writeRaster(ona.buf.rast, "Data/processed/ona_buf_bound.tif", overwrite=TRUE)
+st_write(ona.buffer, "Data/processed/ona_buffer_bound.shp", append=FALSE)
 
   # Extract BC Boundary:
 bc.bound <-can.provs.reproj %>%
-  filter(., PRNAME == "British Columbia / Colombie-Britannique") %>%
-  st_make_valid()
+  filter(., PRNAME == "British Columbia / Colombie-Britannique") 
 
-st_write(bc.bound, "Data/processed/bc_bound.shp")
+st_write(bc.bound, "Data/processed/bc_bound.shp", append=FALSE)
 
 ############################# Prep Agriculture Variables:
 ####################### Now, we will filter the CCS regions and Agriculture Data to BC:
@@ -160,11 +163,10 @@ unique(can.ccs.sf$PRNAME) # Shows that the name for BC is "British Columbia / Co
 
 # Filter down to just BC:
 bc.ccs<-can.ccs.sf %>%
-  filter(., PRNAME == "British Columbia / Colombie-Britannique") %>%
-  st_make_valid()
+  filter(., PRNAME == "British Columbia / Colombie-Britannique") 
 
 # Save this for later:
-st_write(bc.ccs, "Data/processed/BC CCS.shp")
+st_write(bc.ccs, "Data/processed/BC CCS.shp", append=FALSE)
 
 # Filter the Ag Files down to just BC districts: --------------------------
 # See here: https://www.statology.org/filter-rows-that-contain-string-dplyr/  searched: 'Return rows with partial string, filter dplyr'
@@ -186,6 +188,9 @@ bc.farm.2016.ccs<-bc.farm.filter.ccs %>%
   # Here we separate out the CCS code into new column for join with CCS .shp:
 bc.ccs$CCSUID.crop<- str_sub(bc.ccs$CCSUID,-5,-1) # Now we have a matching 6 digits
 unique(bc.ccs$CCSUID.crop) #This is a 5 digit code
+bc.farm.2016.ccs$CCSUID.crop<- str_sub(bc.farm.2016.ccs$GEO,-7,-3) # Now we have a matching 6 digits
+unique(bc.farm.2016.ccs$CCSUID.crop) #This is a 5 digit code
+
 str(bc.farm.2016.ccs) # Check the structure before joining
 unique(animal.farm.wa$County.ANSI)
 
@@ -209,10 +214,10 @@ head(wa.county.reproj) # Check out our WA county data
 
 farm.ccs.join <- bc.ccs %>% 
   left_join(., bc.farm.2016.ccs, by = c("CCSUID.crop" = "CCSUID.crop"))
-wa.animal.join <- wa.county.reporj %>% 
-  left_join(., animal.farm.wa, by = c("County.ANSI" = "CountyID"))
-wa.crop.join <- wa.county.reporj %>% 
-  left_join(., crop.farm.wa, by = c("County.ANSI" = "CountyID"))
+wa.animal.join <- wa.county.reproj %>% 
+  left_join(., animal.farm.wa, by = c("CountyID" = "County.ANSI"))
+wa.crop.join <- wa.county.reproj %>% 
+  left_join(., crop.farm.wa, by = c("CountyID" = "County.ANSI"))
 
 
   # Double check that this is the correct structure:
@@ -244,19 +249,17 @@ animal.farms.ona <- wa.animal.sf[st_intersects(ona.reproj, wa.animal.sf, sparse 
 crop.farms.ona <- wa.crop.sf[st_intersects(ona.reproj, wa.crop.sf, sparse =  FALSE),]
 crop.farms.ona$Value <- as.integer(crop.farms.ona$Value)
 
-
 plot(st_geometry(animal.farms.ona)) # plot to check
-plot(st_geometry(crop.farms.ona)) 
 
   # Subset the data - separate total farms out of NAIC:
-farm.ona.subset <- subset(farm.ccs.bc.ona, North.American.Industry.Classification.System..NAICS. != "Total number of farms")
+farm.ona.subset <- subset(farm.ccs.ona, North.American.Industry.Classification.System..NAICS. != "Total number of farms")
 names(farm.ona.subset)[names(farm.ona.subset) == "North.American.Industry.Classification.System..NAICS."] <- "N_A_I_C"
 
   # Condense Farm Types to Animal & Ground Crop Production:
-animal.product.farming <- dplyr::filter(farm.soi.subset,  N_A_I_C == "Cattle ranching and farming [1121]" | N_A_I_C == "Hog and pig farming [1122]" | N_A_I_C == "Poultry and egg production [1123]"| N_A_I_C == "Sheep and goat farming [1124]" | N_A_I_C =="Other animal production [1129]") 
+animal.product.farming <- dplyr::filter(farm.ona.subset,  N_A_I_C == "Cattle ranching and farming [1121]" | N_A_I_C == "Hog and pig farming [1122]" | N_A_I_C == "Poultry and egg production [1123]"| N_A_I_C == "Sheep and goat farming [1124]" | N_A_I_C =="Other animal production [1129]") 
 
 
-ground.crop.production <- dplyr::filter(farm.soi.subset, N_A_I_C == "Fruit and tree nut farming [1113]" | N_A_I_C == "Greenhouse, nursery and floriculture production [1114]" | N_A_I_C == "Vegetable and melon farming [1112]"
+ground.crop.production <- dplyr::filter(farm.ona.subset, N_A_I_C == "Fruit and tree nut farming [1113]" | N_A_I_C == "Greenhouse, nursery and floriculture production [1114]" | N_A_I_C == "Vegetable and melon farming [1112]"
                                         | N_A_I_C == "Oilseed and grain farming [1111]" | N_A_I_C == "Other crop farming [1119]")
 
   # Total the counts of these farm categories by CCS region:
@@ -275,11 +278,11 @@ ground.crop.bc.sf <- ground.crop.production %>%
   summarise(., "Total Farms in CCS" = sum(VALUE))
 
 animal.prod.wa.sf <- animal.farms.ona %>% 
-  group_by(County.ANSI) %>% 
-  summarise(., "Total Farms in CCS" = sum(VALUE))
+  group_by(CountyID) %>% 
+  summarise(., "Total Farms in CCS" = sum(Value))
 ground.crop.wa.sf <- crop.farms.ona %>% 
-  group_by(CCSUID) %>% 
-  summarise(., "Total Farms in CCS" = sum(VALUE))
+  group_by(CountyID) %>% 
+  summarise(., "Total Farms in CCS" = sum(Value))
 
 
 # names(animal.prod.bc.counts)[names(animal.prod.bc.counts) == "VALUE"] <- "Total Farms in CCS"
