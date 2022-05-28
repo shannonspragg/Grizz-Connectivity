@@ -121,5 +121,5 @@ writeRaster(rough.rescale, filename=here("data/processed/rough_rescale.tif"), ov
 writeRaster(hmi.rescale, filename=here("data/processed/hmi_resist.tif"), overwrite=TRUE)
   # Omniscape Inputs:
 writeRaster(grizz.crop, filename=here("data/processed/griz_source_ona.tif"), overwrite=TRUE) # source input
-writeRaster(biophys.resist.crop, filename=here("data/processed/biophys_resist.tif"), overwrite=TRUE) # resistance input
+writeRaster(biophys.resist.crop, filename=here("data/processed/biophys_resist_ona.tif"), overwrite=TRUE) # resistance input
 
