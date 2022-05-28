@@ -118,11 +118,11 @@ st_crs(grizzpop.reproj) == st_crs(can.provs.reproj) #TRUE
 
 
   # Buffer ONA for Omniscape inputs:
-ona.buffer <- ona.bound %>% 
+ona.buffer <- ona.reproj %>% 
   st_buffer(., 10000)
 
   # Make our ONA template raster:
-ona.vect <- vect(ona.bound)
+ona.vect <- vect(ona.reproj)
 ona.buf <- vect(ona.buffer)
 ona.vect.p <- terra::project(ona.vect, crs(grizz.inc.bc))
 ona.buf.p <- terra::project(ona.buf, crs(grizz.inc.bc))
