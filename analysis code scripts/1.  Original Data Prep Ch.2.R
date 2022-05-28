@@ -212,8 +212,10 @@ head(wa.county.reproj) # Check out our WA county data
 #wa.animal.join <- merge(animal.farm.wa, wa.county.reproj, by.x = "County.ANSI", by.y = "CountyID") 
 # wa.crop.join <- merge(crop.farm.wa, wa.county.reproj, by.x = "County.ANSI", by.y = "CountyID") 
 
-farm.ccs.join <- bc.ccs %>% 
+farm.ccs.join <- bc.ccs %>%   # HELP: this drops the NAIC and value columns.. how do we keep these?? (everything else runs smooth to the end)
   left_join(., bc.farm.2016.ccs, by = c("CCSUID.crop" = "CCSUID.crop"))
+# farm.ccs.join<- farm.ccs.join %>% 
+#   left_join(., bc.farm.2016.ccs %>% dplyr::select("North.American.Industry.Classification.System..NAICS.", "VALUE", "CCSUID.crop"), by = c("CCSUID.crop" = "CCSUID.crop"))
 wa.animal.join <- wa.county.reproj %>% 
   left_join(., animal.farm.wa, by = c("CountyID" = "County.ANSI"))
 wa.crop.join <- wa.county.reproj %>% 
@@ -253,10 +255,10 @@ plot(st_geometry(animal.farms.ona)) # plot to check
 
   # Subset the data - separate total farms out of NAIC:
 farm.ona.subset <- subset(farm.ccs.ona, North.American.Industry.Classification.System..NAICS. != "Total number of farms")
-names(farm.ona.subset)[names(farm.ona.subset) == "North.American.Industry.Classification.System..NAICS."] <- "N_A_I_C"
+names(farm.ccs.ona)[names(farm.ccs.ona) == "North.American.Industry.Classification.System..NAICS."] <- "N_A_I_C"
 
   # Condense Farm Types to Animal & Ground Crop Production:
-animal.product.farming <- dplyr::filter(farm.ona.subset,  N_A_I_C == "Cattle ranching and farming [1121]" | N_A_I_C == "Hog and pig farming [1122]" | N_A_I_C == "Poultry and egg production [1123]"| N_A_I_C == "Sheep and goat farming [1124]" | N_A_I_C =="Other animal production [1129]") 
+animal.product.farming <- dplyr::filter(farm.ccs.ona,  N_A_I_C == "Cattle ranching and farming [1121]" | N_A_I_C == "Hog and pig farming [1122]" | N_A_I_C == "Poultry and egg production [1123]"| N_A_I_C == "Sheep and goat farming [1124]" | N_A_I_C =="Other animal production [1129]") 
 
 
 ground.crop.production <- dplyr::filter(farm.ona.subset, N_A_I_C == "Fruit and tree nut farming [1113]" | N_A_I_C == "Greenhouse, nursery and floriculture production [1114]" | N_A_I_C == "Vegetable and melon farming [1112]"
@@ -306,10 +308,10 @@ ground.crop.wa.sf <- crop.farms.ona %>%
   # so that we have values on the edge of our 10km zone):
 
 # Make our area units kilometers:
-animal.prod.bc.sf$AREA_SQ_KM <- set_units(st_area(animal.prod.bc.sf$AREA_SQM), km^2)
-ground.crop.bc.sf$AREA_SQ_KM <- set_units(st_area(ground.crop.bc.sf$AREA_SQM), km^2)
-animal.prod.wa.sf$AREA_SQ_KM <- set_units(st_area(animal.prod.wa.sf$AREA_SQM), km^2)
-ground.crop.wa.sf$AREA_SQ_KM <- set_units(st_area(ground.crop.wa.sf$AREA_SQM), km^2)
+animal.prod.bc.sf$AREA_SQ_KM <- set_units(st_area(animal.prod.bc.sf), km^2)
+ground.crop.bc.sf$AREA_SQ_KM <- set_units(st_area(ground.crop.bc.sf), km^2)
+animal.prod.wa.sf$AREA_SQ_KM <- set_units(st_area(animal.prod.wa.sf), km^2)
+ground.crop.wa.sf$AREA_SQ_KM <- set_units(st_area(ground.crop.wa.sf), km^2)
 
 #   # Calculate our areas for the two objects: 
 # animal.prod.bc.sf$AREA_SQM <- st_area(animal.prod.bc.sf)
@@ -325,10 +327,10 @@ head(animal.prod.bc.sf)
 ground.crop.bc.sf$Farms_per_sq_km <- ground.crop.bc.sf$`Total Farms in CCS` / ground.crop.bc.sf$AREA_SQ_KM
 head(ground.crop.bc.sf)
 
-animal.prod.wa.sf$Farms_per_sq_km <- animal.prod.wa.sf$`Total Farms in County` / animal.prod.wa.sf$AREA_SQ_KM
+animal.prod.wa.sf$Farms_per_sq_km <- animal.prod.wa.sf$`Total Farms in CCS` / animal.prod.wa.sf$AREA_SQ_KM
 head(animal.prod.wa.sf)
 
-ground.crop.wa.sf$Farms_per_sq_km <- ground.crop.wa.sf$`Total Farms in County` / ground.crop.wa.sf$AREA_SQ_KM
+ground.crop.wa.sf$Farms_per_sq_km <- ground.crop.wa.sf$`Total Farms in CCS` / ground.crop.wa.sf$AREA_SQ_KM
 head(ground.crop.wa.sf)
 
   # Make this col numeric:
@@ -343,31 +345,31 @@ animal.prod.bc <- animal.prod.bc.sf[, c("CCSUID", "Total Farms in CCS", "GEO", "
 ground.crop.bc <- ground.crop.bc.sf[, c("CCSUID", "Total Farms in CCS", "GEO", "VALUE", "CCSNAME", "AREA_SQ_KM"
                                         , "Farms_per_sq_km", "geometry")]
 
-animal.prod.wa <- animal.prod.wa.sf[, c( "County.ANSI", "Total Farms in County", "GEOID", "Value", "NAME", "AREA_SQ_KM"
-                                         , "Farms_per_sq_km", "geometry")]
-                                    
-ground.crop.wa <- ground.crop.wa.sf[, c("County.ANSI", "Total Farms in County", "GEOID", "Value", "NAME", "AREA_SQ_KM"
-                                        , "Farms_per_sq_km", "geometry" )]
+# animal.prod.wa <- animal.prod.wa.sf[, c( "County.ANSI", "Total Farms in County", "GEOID", "Value", "NAME", "AREA_SQ_KM"
+#                                          , "Farms_per_sq_km", "geometry")]
+#                                     
+# ground.crop.wa <- ground.crop.wa.sf[, c("County.ANSI", "Total Farms in County", "GEOID", "Value", "NAME", "AREA_SQ_KM"
+#                                         , "Farms_per_sq_km", "geometry" )]
 
-  # Need to match column names for rbind:
-names(animal.prod.bc)[names(animal.prod.bc) == "CCSUID"] <- "CensusID"
-names(ground.crop.bc)[names(ground.crop.bc) == "CCSUID"] <- "CensusID"
-names(animal.prod.wa)[names(animal.prod.wa) == "County.ANSI"] <- "CensusID"
-names(ground.crop.wa)[names(ground.crop.wa) == "County.ANSI"] <- "CensusID"
-names(animal.prod.bc)[names(animal.prod.bc) == "Total Farms in CCS"] <- "Total Farms in Census Region"
-names(ground.crop.bc)[names(ground.crop.bc) == "Total Farms in CCS"] <- "Total Farms in Census Region"
-names(animal.prod.wa)[names(animal.prod.wa) == "Total Farms in County"] <- "Total Farms in Census Region"
-names(ground.crop.wa)[names(ground.crop.wa) == "Total Farms in County"] <- "Total Farms in Census Region"
-names(animal.prod.wa)[names(animal.prod.wa) == "GEOID"] <- "GEO"
-names(ground.crop.wa)[names(ground.crop.wa) == "GEOID"] <- "GEO"
-names(animal.prod.wa)[names(animal.prod.wa) == "Value"] <- "VALUE"
-names(ground.crop.wa)[names(ground.crop.wa) == "Value"] <- "VALUE"
-names(animal.prod.bc)[names(animal.prod.bc) == "CCSNAME"] <- "NAME"
-names(ground.crop.bc)[names(ground.crop.bc) == "CCSNAME"] <- "NAME"
+#   # Need to match column names for rbind:
+# names(animal.prod.bc)[names(animal.prod.bc) == "CCSUID"] <- "CensusID"
+# names(ground.crop.bc)[names(ground.crop.bc) == "CCSUID"] <- "CensusID"
+# names(animal.prod.wa)[names(animal.prod.wa) == "County.ANSI"] <- "CensusID"
+# names(ground.crop.wa)[names(ground.crop.wa) == "County.ANSI"] <- "CensusID"
+# names(animal.prod.bc)[names(animal.prod.bc) == "Total Farms in CCS"] <- "Total Farms in Census Region"
+# names(ground.crop.bc)[names(ground.crop.bc) == "Total Farms in CCS"] <- "Total Farms in Census Region"
+# names(animal.prod.wa)[names(animal.prod.wa) == "Total Farms in County"] <- "Total Farms in Census Region"
+# names(ground.crop.wa)[names(ground.crop.wa) == "Total Farms in County"] <- "Total Farms in Census Region"
+# names(animal.prod.wa)[names(animal.prod.wa) == "GEOID"] <- "GEO"
+# names(ground.crop.wa)[names(ground.crop.wa) == "GEOID"] <- "GEO"
+# names(animal.prod.wa)[names(animal.prod.wa) == "Value"] <- "VALUE"
+# names(ground.crop.wa)[names(ground.crop.wa) == "Value"] <- "VALUE"
+# names(animal.prod.bc)[names(animal.prod.bc) == "CCSNAME"] <- "NAME"
+# names(ground.crop.bc)[names(ground.crop.bc) == "CCSNAME"] <- "NAME"
 
 # Merge these to make ONA animal and crop farms: --------------------------
-animal.prod.ona <- rbind(animal.prod.bc, animal.prod.wa)
-ground.crop.ona <- rbind(ground.crop.bc, ground.crop.wa)
+animal.prod.ona <- rbind(animal.prod.bc.sf, animal.prod.wa.sf)
+ground.crop.ona <- rbind(ground.crop.bc.sf, ground.crop.wa.sf)
 
   # Check once more:
 plot(st_geometry(animal.prod.ona))
@@ -394,11 +396,11 @@ wa.ona.pas <- st_intersection(wa.desig.filter, ona.buffer)
 
 # Subset only the columns we need: ----------------------------------------
 wa.pas <- wa.ona.pas[, c("Unit_Nm", "d_Des_Tp", "Mang_Type", "geometry" )]
-bc.pa <- bc.ona.pas[, c("UNIT_NAME", "UNIT_TYPE", "TYPE", "geometry" )]
+bc.pa <- bc.ona.pas[, c("NAME_E", "TYPE_E", "OWNER_E", "geometry" )]
 
-names(wa.pas)[names(wa.pas) == "Unit_Nm"] <- "UNIT_NAME"
-names(wa.pas)[names(wa.pas) == "d_Des_Tp"] <- "UNIT_TYPE"
-names(wa.pas)[names(wa.pas) == "Mang_Type"] <- "TYPE"
+names(wa.pas)[names(wa.pas) == "Unit_Nm"] <- "NAME_E"
+names(wa.pas)[names(wa.pas) == "d_Des_Tp"] <- "TYPE_E"
+names(wa.pas)[names(wa.pas) == "Mang_Type"] <- "OWNER_E"
 
 
 # Join the WA and BC PAs Data: -------------------------------------------------
@@ -407,7 +409,7 @@ ona.pas <- rbind(bc.pa, wa.pas)
   # Check this:
 plot(st_geometry(ona.pas))
 
-st_write(ona.pas, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/ona_PAs.shp", overwrite=TRUE) 
+st_write(ona.pas, "Data/processed/ona_PAs.shp", append = FALSE) 
 
 
 ################################# Prep Grizzly Population Units:
@@ -430,7 +432,7 @@ plot(st_geometry(extant.grizz))
 plot(st_geometry(ona.buffer), add=TRUE)
 
 # Save this for later:
-st_write(extant.grizz, "Data/processed/Extant Grizzly Pop Units.shp", overwrite=TRUE) 
+st_write(extant.grizz, "Data/processed/Extant Grizzly Pop Units.shp", append=FALSE) 
 
 
 # ################################## Combine the Hydrology (Lake) Datasets:
