@@ -67,15 +67,13 @@ ona.bound <- st_read("Data/original/ONA_TerritoryBound.shp")
 
 # Check Validity:
 any(!st_is_valid(wa.county.shp)) #FALSE
-any(!st_is_valid(bc.pas)) #FALSE
 any(!st_is_valid(wa.desig)) #FALSE
 st_make_valid(wa.desig)
 any(!st_is_valid(wa.procs)) # FALSE
 st_make_valid(wa.procs)
 any(!st_is_valid(grizz.units)) # FALSE
-st_make_valid(can.provs)
 any(!st_is_valid(ona.bound )) # FALSE
-
+st_make_valid(can.provs)
 
 # Download PA Data: -------------------------------------------------------
 # Publication Data: Load in Canada Spatial Data ---------------------------------------------
@@ -105,43 +103,40 @@ bc.PAs.100.ha <- filter(bc.PAs.iucn.filtered, O_AREA > 100)
 
 # Reproject & Prep ONA Boundary -------------------------------------------
   # We want to match our data to BC Albers
-bc.pas.reproj <- st_transform(st_make_valid(bc.PAs.100.ha), st_crs(ona.bound))
-ccs.reproj <- st_transform(can.ccs.shp, st_crs(ona.bound))
-wa.county.reproj <- st_transform(wa.county.shp, st_crs(ona.bound))
-wa.desig.reproj <- st_transform(wa.desig, st_crs(ona.bound))
-wa.proc.reproj <- st_transform(wa.procs, st_crs(ona.bound))
-grizzpop.reproj <- st_transform(grizz.units, st_crs(ona.bound))
-#ona.reproj <- st_transform(ona.bound, st_crs(ona.bound))
-can.provs.reproj <- st_transform(st_make_valid(can.provs), st_crs(ona.bound))
+ona.reproj <- st_transform(ona.bound, 3005)
+bc.pas.reproj <- st_transform(st_make_valid(bc.PAs.100.ha), st_crs(ona.reproj))
+ccs.reproj <- st_transform(can.ccs.shp, st_crs(ona.reproj))
+wa.county.reproj <- st_transform(wa.county.shp, st_crs(ona.reproj))
+wa.desig.reproj <- st_transform(wa.desig, st_crs(ona.reproj))
+wa.proc.reproj <- st_transform(wa.procs, st_crs(ona.reproj))
+grizzpop.reproj <- st_transform(grizz.units, st_crs(ona.reproj))
+can.provs.reproj <- st_transform(st_make_valid(can.provs), st_crs(ona.reproj))
 
 st_crs(ccs.reproj) == st_crs(bc.pas.reproj) #TRUE
 st_crs(wa.county.reproj) == st_crs(wa.proc.reproj) #TRUE
 st_crs(grizzpop.reproj) == st_crs(can.provs.reproj) #TRUE
-crs(griz.source) # NAD83 / BC Albers
 
 
   # Buffer ONA for Omniscape inputs:
-ona.buffer <- ona.reproj %>% 
+ona.buffer <- ona.bound %>% 
   st_buffer(., 10000)
 
   # Make our ONA template raster:
-ona.vect <- vect(ona.reproj)
+ona.vect <- vect(ona.bound)
 ona.buf <- vect(ona.buffer)
 ona.vect.p <- terra::project(ona.vect, crs(grizz.inc.bc))
 ona.buf.p <- terra::project(ona.buf, crs(grizz.inc.bc))
 grizzinc.crop.t <- terra::crop(grizz.inc.bc, ona.vect.p)  
 grizzinc.crop.b <- terra::crop(grizz.inc.bc, ona.buf.p)  
 
-ona.rast <- terra::rasterize(ona.vect.p, grizzinc.crop.t, field = "OBJECTID")
+ona.rast <- terra::rasterize(ona.vect.p, grizzinc.crop.t, field = "ENTITY")
 ona.rast <- resample(ona.rast, grizzinc.crop.t, method='bilinear')
-ona.rast[sona.rast == 327] <- 0
+#ona.rast[sona.rast == 327] <- 0
 
-ona.buf.rast <- terra::rasterize(ona.buf.p, grizzinc.crop.b, field = "OBJECTID")
+ona.buf.rast <- terra::rasterize(ona.buf.p, grizzinc.crop.b, field = "ENTITY")
 ona.buf.rast <- resample(ona.buf.rast, grizzinc.crop.b, method='bilinear')
-ona.buf.rast[ona.buf.rast == 327] <- 0
+#ona.buf.rast[ona.buf.rast == 327] <- 0
 
-plot(grizzinc.crop.t)
-plot(ona.vect, add=TRUE)
 
   # Export as tiff:
 terra::writeRaster(ona.rast, "Data/processed/ona_bound.tif")
