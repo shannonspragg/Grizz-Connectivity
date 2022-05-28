@@ -62,6 +62,9 @@ grizz.inc.bc <- rast("Data/original/grizz.increase.map.fixed.tif") #  the propor
   # Bear Density - Bear Habitat Suitability (BHS):
 can.provs <- st_read("Data/original/lpr_000b21a_e.shp")
 
+# Global Human Density:
+world.hum.dens <- terra::rast("Data/original/gpw_v4_population_density_adjusted_to_2015_unwpp_country_totals_rev11_2020_30_sec.tif")
+
   # ONA Territory:
 ona.bound <- st_read("Data/original/ONA_TerritoryBound.shp") 
 
@@ -433,6 +436,17 @@ plot(st_geometry(ona.buffer), add=TRUE)
 
 # Save this for later:
 st_write(extant.grizz, "Data/processed/Extant Grizzly Pop Units.shp", append=FALSE) 
+
+################################# Prep Human Density Predictor:
+
+# Reproject the Data: --------------------------------------------------
+##MW: I am not reprojecting the data here as that doesn't seem necessary yet and it's not clear what the new resolution should be
+ona.buf.reproj <- project(ona.buf, world.hum.dens)
+world.dens.crop <- crop(world.hum.dens, ona.buf.reproj)
+
+
+# Save Raster as .tif for later: ----------------------------------------------------
+terra::writeRaster(world.dens.crop, "Data/processed/human_dens_ona.tif")
 
 
 # ################################## Combine the Hydrology (Lake) Datasets:
