@@ -18,7 +18,7 @@ animal.prod.ona <- st_read("Data/processed/ONA Animal Product Farming.shp")
 ground.crop.ona <- st_read("Data/processed/ONA Ground Crop Production.shp")
 
   # Grizzinc: 
-grizz.inc.comb <- rast("Data/processed/grizz.inc.combtif") #  the proportion of people within a census that 
+#grizz.inc.comb <- rast("Data/processed/grizz.inc.combtif") #  the proportion of people within a census that 
 
   # Bear Density - Bear Habitat Suitability (BHS):
 bhs.rast <- rast("Data/processed/grizz_source_ona.tif")
@@ -30,12 +30,14 @@ biophys.rast <- rast("Data/original/ona_cum_currmap.tif")
 ona.buffer <- st_read("Data/processed/ona_buffer_bound.shp") 
 ona.buf.rast <- rast("Data/processed/ona_buf_bound.tif")
 
-# PA and Metro Data: (need to be cropped)
+  # PA and Metro Data: (need to be cropped)
 ona.PAs <- st_read("Data/processed/ona_PAs.shp") 
 
-# Extent Grizzly Populations:
+  # Extent Grizzly Populations:
 extant.grizz <- st_read("Data/processed/Extant Grizzly Pop Units.shp")
 
+  # Human Density:
+hm.dens <- rast("Data/processed/human_dens_ona.tif")
 
 # Check Projections: ------------------------------------------------------
 ona.animal.reproj <- st_make_valid(animal.prod.ona) %>% 
@@ -116,10 +118,9 @@ names(dist.grizz.pop.raster)[names(dist.grizz.pop.raster) == "HANDLE"] <- "Dista
 bhs.reproj <- terra::project(bhs.rast, crs(ona.buf.rast))
   # Biophys Map:
 biophys.reproj <- terra::project(biophys.rast, crs(ona.buf.rast))
-
   # Grizzinc:
 grizzinc.reproj <- terra::project(grizz.inc.comb, crs(ona.buf.rast))
-
+  # Human Density:
 
 crs(ona.buf.rast) == crs(grizzinc.reproj) #TRUE
 crs(bhs.reproj) == crs(biophys.reproj) #TRUE
