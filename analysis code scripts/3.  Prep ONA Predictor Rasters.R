@@ -21,21 +21,20 @@ ground.crop.ona <- st_read("Data/processed/ONA Ground Crop Production.shp")
 grizz.inc.comb <- rast("Data/processed/grizz.inc.combtif") #  the proportion of people within a census that 
 
   # Bear Density - Bear Habitat Suitability (BHS):
-bhs.rast <- rast("Data/processed/grizz_dsource_ona.tif")
+bhs.rast <- rast("Data/processed/grizz_source_ona.tif")
 
   # Biophysical Current Map (Cumulative current flow shows the total current for each landscape pixel):
-biophys.rast <- rast("Data/original/soi_cum_currmap.tif") 
-biophys.norm.rast <- rast("Data/original/soi_biophys_normalized_cum_currmap.tif") 
+biophys.rast <- rast("Data/original/ona_cum_currmap.tif") 
 
   # SOI Region for plotting:
-ona.buffer <- st_read("/Users/shannonspragg/Grizz-Connectivity/Data/processed/ona_buffer_bound.shp") 
-ona.buf.rast <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/processed/ona_buf_bound.tif")
+ona.buffer <- st_read("Data/processed/ona_buffer_bound.shp") 
+ona.buf.rast <- rast("Data/processed/ona_buf_bound.tif")
 
 # PA and Metro Data: (need to be cropped)
-ona.PAs <- st_read("/Users/shannonspragg/Grizz-Connectivity/Data/original/ona_PAs.shp") 
+ona.PAs <- st_read("Data/processed/ona_PAs.shp") 
 
 # Extent Grizzly Populations:
-extant.grizz <- st_read("/Users/shannonspragg/Grizz-Connectivity/Data/processed/Extant Grizzly Pop Units.shp")
+extant.grizz <- st_read("Data/processed/Extant Grizzly Pop Units.shp")
 
 
 # Check Projections: ------------------------------------------------------
@@ -81,8 +80,8 @@ names(animal.prod.rast)[names(animal.prod.rast) == "Frms___"] <- "Density of Ani
 names(ground.crop.rast)[names(ground.crop.rast) == "Frms___"] <- "Density of Ground Crop & Produce Farming"
 
   # Save these Farm Rasters:
-terra::writeRaster(animal.prod.rast, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/animal_production_ona_raster.tif", overwrite=TRUE)
-terra::writeRaster(ground.crop.rast, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/ground_crop_ona_raster.tif", overwrite=TRUE )
+terra::writeRaster(animal.prod.rast, "Data/processed/animal_production_ona_raster.tif", overwrite=TRUE)
+terra::writeRaster(ground.crop.rast, "Data/processed/ground_crop_ona_raster.tif", overwrite=TRUE )
 
 
 ########################################### Next, we make our Distance to PA and Grizzly Pop Rasters:
@@ -117,7 +116,6 @@ names(dist.grizz.pop.raster)[names(dist.grizz.pop.raster) == "HANDLE"] <- "Dista
 bhs.reproj <- terra::project(bhs.rast, crs(ona.buf.rast))
   # Biophys Map:
 biophys.reproj <- terra::project(biophys.rast, crs(ona.buf.rast))
-biophys.nrom.reproj <- terra::project(biophys.norm.rast, crs(ona.buf.rast))
 
   # Grizzinc:
 grizzinc.reproj <- terra::project(grizz.inc.comb, crs(ona.buf.rast))
@@ -129,15 +127,12 @@ crs(bhs.reproj) == crs(biophys.reproj) #TRUE
 
   # Crop these Rasters to ONA extant:
 biophys.crop <- terra::crop(biophys.reproj, ona.buf.rast)
-biophys.norm.crop <- terra::crop(biophys.nrom.reproj, ona.buf.rast)
 
   # Expand the grizz_dens extant to include WA:
-bhs.crop <- terra::crop(bhs.no.na, ona.buf.rast)
+bhs.crop <- terra::crop(bhs.reproj, ona.buf.rast)
 
 # Resample to match extents and res:
 biophys.rsmple <- resample(biophys.crop, ona.buf.rast, method='bilinear')
-biophys.norm.rsmple <- resample(biophys.norm.crop, ona.buf.rast, method='bilinear')
-
 
 bhs.rsmple <- resample(bhs.crop, ona.buf.rast, method='bilinear')
 grizzinc.comb.rsmple <- resample(grizz.inc.comb, ona.buf.rast, method='bilinear')
@@ -160,8 +155,6 @@ plot(ona.bound.vect, add=TRUE)
 
 grizzinc.ona <- terra::mask(grizzinc.comb.rsmple, ona.bound.vect) 
 biophys.ona <- terra::mask(biophys.rsmple, ona.bound.vect) 
-biophys.norm.ona <- terra::mask(biophys.norm.rsmple, ona.bound.vect) 
-
 
 bhs.ona <- terra::mask(bhs.rsmple, ona.bound.vect) 
 d2pa.ona <- terra::mask(dist.pa.raster, ona.bound.vect) 
@@ -182,13 +175,12 @@ names(bhs.ona)[names(bhs.ona) == "Height"] <- "Bear Habitat Suitability (BHS)"
 
 
 # Save our Cropped Rasters: -----------------------------------------------
-terra::writeRaster(grizzinc.ona, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/grizz_inc_ona.tif", overwrite=TRUE)
-terra::writeRaster(biophys.ona, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/biophys_ona.tif", overwrite=TRUE)
-terra::writeRaster(biophys.norm.ona, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/biophys_normalized_ona.tif", overwrite=TRUE)
+terra::writeRaster(grizzinc.ona, "Data/processed/grizz_inc_ona.tif", overwrite=TRUE)
+terra::writeRaster(biophys.ona, "Data/processed/biophys_ona.tif", overwrite=TRUE)
+terra::writeRaster(biophys.norm.ona, "Data/processed/biophys_normalized_ona.tif", overwrite=TRUE)
 
-terra::writeRaster(bhs.no.na, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/grizz_dens_mean.tif", overwrite=TRUE)
-terra::writeRaster(bhs.ona, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/bhs_ona.tif", overwrite=TRUE)
-terra::writeRaster(d2pa.ona, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/dist2pa_ona.tif", overwrite=TRUE) # already saved
-terra::writeRaster(d2grizzpop.ona, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/dist2grizz_pop_ona.tif", overwrite=TRUE) # already saved
+terra::writeRaster(bhs.ona, "Data/processed/bhs_ona.tif", overwrite=TRUE)
+terra::writeRaster(d2pa.ona, "Data/processed/dist2pa_ona.tif", overwrite=TRUE) # already saved
+terra::writeRaster(d2grizzpop.ona, "Data/processed/dist2grizz_pop_ona.tif", overwrite=TRUE) # already saved
 
 

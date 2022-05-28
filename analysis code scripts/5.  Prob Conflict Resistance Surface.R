@@ -25,7 +25,7 @@ rescale01 <- function(r1) {
 
 bhs.ona <- rast("Data/processed/bhs_ona.tif")
 r <- raster("Data/processed/ona_buf_bound.tif") 
-ona.buf <- st_read("/Users/shannonspragg/Grizz-Connectivity/Data/processed/ona_buffer_bound.shp") 
+ona.buf <- st_read("Data/processed/ona_buffer_bound.shp") 
 p.bear.conf <- raster("Data/processed/ona_p_bear_conf.tif")
 grizz.dens <- raster("Data/processed/grizz_dens_mean.tif")
 rough.rescale <- raster("Data/processed/rough_rescale.tif")

@@ -17,23 +17,23 @@ library(viridis)
 
 # Bring in Data: ----------------------------------------------------------
   # Biophysical Omniscape Map:
-biophys.normalized.cs <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/original/biophysical_normalized_cum_currmap.tif")
-biophys.flow.potential <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/original/biophysical_flow_potential.tif")
-biophys.cum.current <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/original/biophys_ona_cum_currmap.tif")
+biophys.normalized.cs <- rast("Data/original/biophysical_normalized_cum_currmap.tif")
+biophys.flow.potential <- rast("Data/original/biophysical_flow_potential.tif")
+biophys.cum.current <- rast("Data/original/biophys_ona_cum_currmap.tif")
 
   # Social + Biophysical Omniscape Map: (Social values of grizzlies) NEED UPDATED
-social.bio.normalized <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/original/social_biophys_normalized_cum_currmap.tif")
-social.bio.cum.current <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/original/social_biophys_ona_cum_currmap.tif")
-social.bio.flow.potential <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/original/social_bio_flow_potential.tif")
+social.bio.normalized <- rast("Data/original/social_biophys_normalized_cum_currmap.tif")
+social.bio.cum.current <- rast("Data/original/social_biophys_ona_cum_currmap.tif")
+social.bio.flow.potential <- rast("Data/original/social_bio_flow_potential.tif")
 
   # Probability of Bear Conflict Omniscape Map: NEED UPDATED
-prob.bear.conf.normalized <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/original/p_conflict_normalized_cum_currmap.tif")
-prob.conf.flow.potential <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/original/p_conflict_flow_potential.tif")
-prob.conf.cum.current <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/original/p_conflict_cum_currmap.tif")
+prob.bear.conf.normalized <- rast("Data/original/p_conflict_normalized_cum_currmap.tif")
+prob.conf.flow.potential <- rast("Data/original/p_conflict_flow_potential.tif")
+prob.conf.cum.current <- rast("Data/original/p_conflict_cum_currmap.tif")
 
   # ONA Template Raster:
-ona.template <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/processed/ona_bound.tif")
-ona.bound <- st_read("/Users/shannonspragg/Grizz-Connectivity/Data/original/ONA_TerritoryBound.shp") 
+ona.template <- rast("Data/processed/ona_bound.tif")
+ona.bound <- st_read("Data/original/ONA_TerritoryBound.shp") 
 ona.reproj <- st_transform(ona.bound, st_crs(crs(ona.template)))
 ona.vect <- vect(ona.reproj)
 
@@ -73,17 +73,17 @@ plot(prob.conf.normalized.ona, col=plasma(256), axes = TRUE, main = "Probability
 plot(prob.conf.difference, col=plasma(256), axes = TRUE, main = "Probability of Bear Conflict Normalized Connectivity Map")
 
 # Save Cropped Rasters: ---------------------------------------------------
-writeRaster(biophys.normalized.ona, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/biophys_normalized_ona.tif", overwrite=TRUE)
-writeRaster(social.biophys.normalized.ona, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/social_biophys_normalized_ona.tif", overwrite=TRUE)
-writeRaster(biophys.cum.current.ona, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/biophys_cum_current_ona.tif", overwrite=TRUE)
+writeRaster(biophys.normalized.ona, "Data/processed/biophys_normalized_ona.tif", overwrite=TRUE)
+writeRaster(social.biophys.normalized.ona, "Data/processed/social_biophys_normalized_ona.tif", overwrite=TRUE)
+writeRaster(biophys.cum.current.ona, "Data/processed/biophys_cum_current_ona.tif", overwrite=TRUE)
 
 
-writeRaster(prob.conf.difference, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/p_conflict_normalized_ona.tif", overwrite=TRUE)
+writeRaster(prob.conf.difference, "Data/processed/p_conflict_normalized_ona.tif", overwrite=TRUE)
 
 
 # Make Zoomed In Maps for Figure 5: ---------------------------------------
   # Bring in Census Data:
-can.census.regions <- st_read("/Users/shannonspragg/Grizz-Connectivity/Data/original/lcd_000b16a_e.shp")
+can.census.regions <- st_read("Data/original/lcd_000b16a_e.shp")
 
 bc.census.regions <- can.census.regions %>%
   filter(., PRNAME == "British Columbia / Colombie-Britannique") %>%
@@ -91,7 +91,7 @@ bc.census.regions <- can.census.regions %>%
   # Filter to the Census Regions we want:
 okanagan.census.regions <- bc.census.regions %>%
   filter(.,  CDUID == "5907" | CDUID == "5905" | CDUID == "5933" | CDUID == "5935" | CDUID == "5937")
-st_write(okanagan.census.regions, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/okanagan_census_crop.shp")
+st_write(okanagan.census.regions, "Data/processed/okanagan_census_crop.shp")
   
   # Reproject:
 census.zoom.reproj <- st_transform(okanagan.census.regions, st_crs(crs(ona.template)))
@@ -109,8 +109,8 @@ plot(p.conf.zoom, col=plasma(256), axes = TRUE, main = "Probability of Bear Conf
 
 
 # Save our Cropped Outputs: -----------------------------------------------
-writeRaster(biophys.zoom, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/biophys_zoom.tif", overwrite=TRUE)
-writeRaster(social.biophys.zoom, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/social_biophys_zoom.tif", overwrite=TRUE)
-writeRaster(p.conf.zoom, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/p_conflict_zoom.tif", overwrite=TRUE)
+writeRaster(biophys.zoom, "Data/processed/biophys_zoom.tif", overwrite=TRUE)
+writeRaster(social.biophys.zoom, "Data/processed/social_biophys_zoom.tif", overwrite=TRUE)
+writeRaster(p.conf.zoom, "Data/processed/p_conflict_zoom.tif", overwrite=TRUE)
 
 

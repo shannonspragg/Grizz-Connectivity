@@ -26,32 +26,31 @@ library(projpred)
 
 # Bring in Data: ----------------------------------------------------------
   # WARP Data:
-warp.df <- st_read("/Users/shannonspragg/Grizz-Connectivity/Data/original/warp_df_complete.shp")
-post.co.offset <- readRDS(file = "/Users/shannonspragg/Grizz-Connectivity/Data/original/post_co_offset.rds")
+warp.df <- st_read("Data/original/warp_df_complete.shp")
+post.co.offset <- readRDS(file = "Data/original/post_co_offset.rds")
 
   # Predictor Rasters:
-grizz.inc <- rast( "/Users/shannonspragg/Grizz-Connectivity/Data/processed/grizz_inc_ona.tif")
-biophys <- rast( "/Users/shannonspragg/Grizz-Connectivity/Data/processed/biophys_ona.tif")
-biophys.norm <- rast( "/Users/shannonspragg/Grizz-Connectivity/Data/processed/biophys_normalized_ona.tif")
+grizz.inc <- rast( "Data/processed/grizz_inc_ona.tif")
+biophys <- rast( "Data/processed/biophys_ona.tif")
 
-bhs <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/processed/bhs_ona.tif")
-dist2pa <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/processed/dist2pa_ona.tif") 
-dist2grizzpop <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/processed/dist2grizz_pop_ona.tif") 
-animal.prod <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/processed/animal_production_ona_raster.tif")
-ground.crop <- rast("/Users/shannonspragg/Grizz-Connectivity/Data/processed/ground_crop_ona_raster.tif" )
+bhs <- rast("Data/processed/bhs_ona.tif")
+dist2pa <- rast("Data/processed/dist2pa_ona.tif") 
+dist2grizzpop <- rast("Data/processed/dist2grizz_pop_ona.tif") 
+animal.prod <- rast("Data/processed/animal_production_ona_raster.tif")
+ground.crop <- rast("Data/processed/ground_crop_ona_raster.tif" )
 
 
 ####################################### Prep WARP Data:
 # Scale the Variables: ----------------------------------------------------------
-scale2sd <-function(variable){(variable - mean(variable, na.rm=TRUE))/(2*sd(variable, na.rm=TRUE))}
+#scale2sd <-function(variable){(variable - mean(variable, na.rm=TRUE))/(2*sd(variable, na.rm=TRUE))}
 
-dist.2.pa.co <- scale2sd(warp.df$dst__PA)
-animal.farm.dens.co <- warp.df$Anml_Fr
-ground.crop.dens.co <- warp.df$Grnd_Cr
-dist.2.grizzpop.co <- scale2sd(warp.df$dst__GP)
-grizzinc.co <- scale2sd(warp.df$GrizzInc)
-bhs.co <- scale2sd(warp.df$BHS)
-biophys.co <- scale2sd(warp.df$Biophys)
+dist.2.pa.co <- scale(warp.df$dst__PA)
+animal.farm.dens.co <- scale(warp.df$Anml_Fr)
+ground.crop.dens.co <- scale(warp.df$Grnd_Cr)
+dist.2.grizzpop.co <- scale(warp.df$dst__GP)
+grizzinc.co <- scale(warp.df$GrizzInc)
+bhs.co <- scale(warp.df$BHS)
+biophys.co <- scale(warp.df$Biophys)
 
 bears_presence_co <- warp.df$bears # Binomial bears
 prob.gen.conf <- warp.df$ProbGeneralConf  # This was already scaled
@@ -68,9 +67,9 @@ which(is.na(warp.df$CCSNAME.co)) # none
 
 ## Make CCS Varying Intercept Raster: ----------------------------------------------------------
 
-ona.ccs.crop <- st_read( "/Users/shannonspragg/Grizz-Connectivity/Data/processed/ONA Census Districts.shp")
+ona.ccs.crop <- st_read( "Data/processed/ONA Census Districts.shp")
 # Bring in one of our rasters for rasterizing polygon data later:
-ona.buf.rast <- terra::rast("/Users/shannonspragg/Grizz-Connectivity/Data/processed/ona_buf_bound.tif") # ONA Region 
+ona.buf.rast <- terra::rast("Data/processed/ona_buf_bound.tif") # ONA Region 
 
 # Reproject the Data:
 ona.ccs.reproj <- st_make_valid(ona.ccs.crop) %>% 
@@ -126,7 +125,7 @@ ccs.means.merge <- terra::merge(ccs.varint.means.rast.co, ona.ccs.rast)
 ccs.means.merge[ccs.means.merge > 1.219815] <- -1.5 #make our max ccs mean value the cutoff
 
 # Save our CCS Post Means Raster: -----------------------------------------
-terra::writeRaster(ccs.means.merge, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/CCS_varint_raster_co.tif", overwrite = TRUE )
+terra::writeRaster(ccs.means.merge, "Data/processed/CCS_varint_raster_co.tif", overwrite = TRUE )
 
 # Scale our Predictor Rasters: --------------------------------------------
 # We can do this Step by Step:
@@ -135,43 +134,43 @@ terra::writeRaster(ccs.means.merge, "/Users/shannonspragg/Grizz-Connectivity/Dat
   d2pa.mean.co <- mean(warp.df$dst__PA)
   d2pa.sub.mean.co <- dist2pa - d2pa.mean.co
   d2pa.sd.co <- sd(warp.df$dst__PA)
-  dist2pa.rast.co.sc <- d2pa.sub.mean.co / ( 2 * d2pa.sd.co)
+  dist2pa.rast.co.sc <- d2pa.sub.mean.co / ( d2pa.sd.co)
   
   # Distance to Grizzly Pops:
   d2grizz.mean.co <- mean(warp.df$dst__GP)
   d2grizz.sub.mean.co <- dist2grizzpop - d2grizz.mean.co
   d2grizz.sd.co <- sd(warp.df$dst__GP)
-  dist2grizzpop.rast.co.sc <- d2grizz.sub.mean.co / ( 2 * d2grizz.sd.co)
+  dist2grizzpop.rast.co.sc <- d2grizz.sub.mean.co / (d2grizz.sd.co)
   
   # Animal Farm Density:
   animal.farm.mean.co <- mean(warp.df$Anml_Fr)
   anim.f.sub.mean.co <- animal.prod - animal.farm.mean.co
   anim.f.sd.co <- sd(warp.df$Anml_Fr)
-  animal.farm.rast.co.sc <- anim.f.sub.mean.co / ( 2 * anim.f.sd.co)
+  animal.farm.rast.co.sc <- anim.f.sub.mean.co / (anim.f.sd.co)
   
   # Ground Crop Density:
   ground.crop.mean.co <- mean(warp.df$Grnd_Cr)
   ground.c.sub.mean.co <- ground.crop - ground.crop.mean.co
   ground.c.sd.co <- sd(warp.df$Grnd_Cr)
-  ground.crop.rast.co.sc <- ground.c.sub.mean.co / ( 2 * ground.c.sd.co)
+  ground.crop.rast.co.sc <- ground.c.sub.mean.co / ( ground.c.sd.co)
   
   # Grizz Increase:
   grizzinc.mean.co <- mean(warp.df$GrzzInc)
   grizz.sub.mean.co <- grizz.inc - grizzinc.mean.co
   grizzinc.sd.co <- sd(warp.df$GrzzInc)
-  grizzinc.rast.co.sc <- grizz.sub.mean.co / ( 2 * grizzinc.sd.co)
+  grizzinc.rast.co.sc <- grizz.sub.mean.co / ( grizzinc.sd.co)
   
   # Biophys:
   biophys.mean.co <- mean(warp.df$Biophys)
   bio.sub.mean.co <- biophys.norm - biophys.mean.co
   biophys.sd.co <- sd(warp.df$Biophys)
-  biophys.norm.rast.co.sc <- bio.sub.mean.co / ( 2 * biophys.sd.co)
+  biophys.norm.rast.co.sc <- bio.sub.mean.co / ( biophys.sd.co)
   
   # BHS:
   bhs.mean.co <- mean(warp.df$BHS)
   bhs.sub.mean.co <- bhs - bhs.mean.co
   bhs.sd.co <- sd(warp.df$BHS)
-  bhs.rast.co.sc <- bhs.sub.mean.co / ( 2 * bhs.sd.co)
+  bhs.rast.co.sc <- bhs.sub.mean.co / ( bhs.sd.co)
   
   # Produce our P(Bear Conflict) Raster: ------------------------------------
   
@@ -198,5 +197,5 @@ terra::writeRaster(ccs.means.merge, "/Users/shannonspragg/Grizz-Connectivity/Dat
   
 
 # Save Raster: ------------------------------------------------------------
-writeRaster(p_BEAR_conf_ona_rast, "/Users/shannonspragg/Grizz-Connectivity/Data/processed/ona_p_bear_conf.tif", overwrite = TRUE)
+writeRaster(p_BEAR_conf_ona_rast, "Data/processed/ona_p_bear_conf.tif", overwrite = TRUE)
 
