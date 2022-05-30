@@ -101,3 +101,9 @@ bc_bound.shp
 bc_bound.shx
 griz_source_ona.tif
 grizz.inc.comb.tif
+biophysical_cum_currmap.tif
+biophysical_flow_potential.tif
+biophysical_normalized_cum_currmap.tif
+p_conflict_cum_currmap.tif
+p_conflict_flow_potential.tif
+p_conflict_normalized_cum_currmap.tif
