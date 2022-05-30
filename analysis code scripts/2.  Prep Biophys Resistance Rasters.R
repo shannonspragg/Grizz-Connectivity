@@ -26,10 +26,6 @@ elev.can <- rast(raster::getData('alt', country = 'CAN'))
 elev.us <- rast(raster::getData('alt', country = 'USA')[[1]])
 elev <- mosaic(elev.can, elev.us)
 
-  # Import the grizzly resistance file
-grizz.inc.bc <- rast("Data/original/grizz.increase.map.fixed.tif") #  the proportion of people within a census that 
-grizz.inc.wa <- rast("Data/original/griz.increase.wa.tif") 
-
 
   # Reproject the ONA shapefile boundary
 griz_proj <- terra::project(griz_dens, hmi)
