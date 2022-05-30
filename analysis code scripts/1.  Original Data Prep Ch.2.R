@@ -2,24 +2,20 @@
   ## Here we will be prepping the data for our variables from the Ch.1 analysis, extending them to the entirety 
   # of the ONA territory in order to prep them for fitting our probability of conflict prediction raster.
 
-# Loadport Packages -------------------------------------------------------
+# Load Packages -------------------------------------------------------
 library(tidyverse)
-library(dplyr)
 library(sf)
 library(sp)
 library(rgeos)
-library(raster)
+#library(raster)
 library(rgdal)
-library(fasterize)
+#library(fasterize)
 library(terra)
 library(units)
 library(googledrive)
-library(stringr)
 library(geosphere)
 library(lakemorpho)
 library(here)
-library(rgdal)
-library(tidyverse)
 library(measurements)
 
 # Load our Data with GoogleDrive: -----------------------------------------
