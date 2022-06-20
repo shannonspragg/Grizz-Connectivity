@@ -108,3 +108,7 @@ p_conflict_cum_currmap.tif
 p_conflict_flow_potential.tif
 p_conflict_normalized_cum_currmap.tif
 p_conflict_cum_current_ona.tif
+griz_inc_ONA.tif
+ona_griz_inc_crop.tif
+ona_griz_inc_crop.tif.aux.xml
+p_conflict_diff_ona.tif

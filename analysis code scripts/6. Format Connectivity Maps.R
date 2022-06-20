@@ -62,12 +62,20 @@ plot(biophys.cum.current.ona, col=plasma(256), axes = TRUE, main = "Biophysical 
 plot(prob.conf.normalized.ona, col=plasma(256), axes = TRUE, main = "Probability of Bear Conflict Normalized Connectivity Map")
 plot(prob.conf.cum.curmap.ona, col=plasma(256), axes = TRUE, main = "Probability of Bear Conflict Cumulative Connectivity Map")
 
+
+# Calculate Difference of Biophys and Conflict: ---------------------------
+# p.conf.diff <- prob.conf.normalized.ona - biophys.normalized.ona
+# biophys.diff <- biophys.normalized.ona - prob.conf.normalized.ona
+
+p.conf.diff <- prob.conf.cum.curmap.ona - biophys.cum.current.ona
+
 # Save Cropped Rasters: ---------------------------------------------------
 writeRaster(biophys.normalized.ona, "Data/processed/biophys_normalized_ona.tif", overwrite=TRUE)
 writeRaster(biophys.cum.current.ona, "Data/processed/biophys_cum_current_ona.tif", overwrite=TRUE)
 
 writeRaster(prob.conf.normalized.ona, "Data/processed/p_conflict_normalized_ona.tif", overwrite=TRUE)
 writeRaster(prob.conf.cum.curmap.ona, "Data/processed/p_conflict_cum_current_ona.tif", overwrite=TRUE)
+writeRaster(p.conf.diff, "Data/processed/p_conflict_diff_ona.tif", overwrite=TRUE)
 
 
 # # Make Zoomed In Maps: ---------------------------------------
