@@ -1,9 +1,13 @@
-#prep bear conflict surface
+
+# prep bear conflict surface ----------------------------------------------
+
+# Load packages:
 library(tidyverse)
 library(rstanarm)
 library(terra)
 library(sf)
 library(tigris)
+
 # Bring in original data and model fit ------------------------------------
 #this file was produced for the SOI-Grizz analysis and is brought in here to ensure that the predictor rasters are on the appropriate scale
 bear.conflict <- st_read("Data/original/warp_final.shp") %>% 

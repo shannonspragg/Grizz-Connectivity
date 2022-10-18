@@ -1,6 +1,11 @@
+
+# Distance to Extant grizzly populations: ---------------------------------
+
+# Load packages:
 library(sf)
 library(tidyverse)
 library(terra)
+
 #Prepare distance from recovery units
 bc.grizz.units <- st_read("Data/original/GBPU_BC_polygon.shp") %>% 
   filter(., POP_NAME == "South Chilcotin Ranges" | 
@@ -12,7 +17,7 @@ bc.grizz.units <- st_read("Data/original/GBPU_BC_polygon.shp") %>%
            POP_NAME == "Central Selkirk" |
            POP_NAME == "Wells Gray" | 
            POP_NAME == "South Selkirk")
-#BC pops based on... SHANNON can you fill in here
+#BC pops based on Mowat 2020 GBPU Data for BC, filtering to current populations that border/overlap the SOI
 
 #Bring in the US Recovery zones and filter to those in ID,WA, MT with bears based on https://www.fws.gov/species/brown-bear-ursus-arctos-horribilis
 fgdb <- "Data/original/GrizzlyDistribRecoveryZones.gdb/"

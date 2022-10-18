@@ -1,7 +1,12 @@
-#prep biophys resist surface
+
+# prep biophys resist surface ---------------------------------------------
+
+# Load packages:
 library(terra)
 library(sf)
 library(tidyverse)
+
+# Data:
 bhs <- rast("Data/processed/bhs_ONA.tif")
 ghm1 <- rast("Data/original/gHMv1_300m_2017_static/gHMv1_300m_2017_static-0000000000-0000000000.tif")
 ghm2 <- rast("/Users/mattwilliamson/Google Drive/My Drive/SpaSES Lab/Shared Data Sets/Wildlife Survey/data/original/rasters/gHMv1_300m_2017_static-0000046592-0000000000.tif")

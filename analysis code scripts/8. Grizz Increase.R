@@ -1,6 +1,10 @@
-#get the griz increase data
+
+# get the griz increase data ----------------------------------------------
+
+# Load packages:
 library(terra)
 
+# Bring in our MRP data from the survey:
 griz.inc.can <- rast('Data/original/griz.increase.bcab.update.tif')
 griz.inc.us <- rast('Data/original/griz.increase.waid.update.tif')
 

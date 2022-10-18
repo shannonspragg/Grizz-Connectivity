@@ -1,16 +1,21 @@
-#prep grizhab data
+
+# Prep Grizz Habitat data -------------------------------------------------
+
+# Load packages:
 library(terra)
 library(sf)
+
+# Bring in data:
 bhs <- rast("Data/original/grizz_dens.tif")
 dist2met <- rast("Data/processed/dist2met_km_ONA.tif")
-
 
 bhs.ONA <- project(bhs, dist2met)
 bhs.trim <- trim(bhs.ONA)
 
-
 # load US recovery unit ---------------------------------------
-#The NC RZ has few (if any) bears currently, but is known to have lots of available habitat. in order to develop a potential habitat layer that covers the entirety of the landscape, I'm going to assign the upper 80th percentile to the NC area and the mean value to the rest of the region that occurs beyond the existing model
+#The NC RZ has few (if any) bears currently, but is known to have lots of available habitat. 
+#In order to develop a potential habitat layer that covers the entirety of the landscape, we assign the upper 80th percentile 
+# to the NC area and the mean value to the rest of the region that occurs beyond the existing model
 
 nc.rz <- st_read("Data/original/ncegrizrecovg1.shp") %>% 
   st_transform(., crs(bhs.ONA))
