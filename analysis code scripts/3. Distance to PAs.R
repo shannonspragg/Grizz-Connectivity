@@ -1,9 +1,13 @@
-#Estimate distance to protected areas
+
+# #Estimate distance to protected areas -----------------------------------
+
+# Load packages:
 library(tidyverse)
 library(sf)
 library(rgdal)
 library(terra)
 library(gdalUtilities)
+
 # Load BC PAs -------------------------------------------------------------
 fgdb <- "Data/original/CPCAD-BDCAPC_Dec2020.gdb"
 fc <- readOGR(dsn=fgdb,layer="CPCAD_Dec2020")

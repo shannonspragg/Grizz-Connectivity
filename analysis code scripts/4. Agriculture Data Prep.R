@@ -1,13 +1,16 @@
-#generate livesotck ops and row-crop ops rasters
+
+# generate livesotck ops and row-crop ops rasters -------------------------
+
+# Load packages:
 library(tidyverse)
 library(terra)
 library(sf)
 library(tigris)
+
 # Ag Data:
-#SHANNON: NEED INFO ON WHERE THESE DATA CAME FROM AND HOW YOU MADE THE DISTINCTIONS
-farm.type <- read.csv("Data/original/farm type_32100403.csv")
-animal.farm.wa <- read.csv("Data/original/Animal Farming WA.csv")
-crop.farm.wa <- read.csv("Data/original/Crop Farming WA.csv")
+farm.type <- read.csv("Data/original/farm type_32100403.csv") #from Ag census
+animal.farm.wa <- read.csv("Data/original/Animal Farming WA.csv") # From US NASS
+crop.farm.wa <- read.csv("Data/original/Crop Farming WA.csv") # From US NASS
 animal.farm.id <- read.csv("Data/original/idaho_animal_ag_census.csv") %>% 
   filter(., Data.Item == "ANIMAL TOTALS, INCL PRODUCTS - OPERATIONS WITH SALES")
 crop.farm.id <- read.csv("Data/original/idaho_crop_ag_census.csv") %>% 

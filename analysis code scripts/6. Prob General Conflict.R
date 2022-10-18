@@ -1,9 +1,13 @@
-#prep general prob of conflict data
+
+# prep general prob of conflict data --------------------------------------
+
+# Load packages:
 library(tidyverse)
 library(rstanarm)
 library(terra)
 library(sf)
 library(tigris)
+
 # Bring in original data and model fit ------------------------------------
 #this file was produced for the SOI-Grizz analysis and is brought in here to ensure that the predictor rasters are on the appropriate scale
 warp.pres.abs <- st_read(here::here("./Data/original/pres_abs_final.shp")) %>% st_drop_geometry()

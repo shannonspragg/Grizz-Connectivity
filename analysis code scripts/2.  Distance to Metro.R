@@ -1,8 +1,12 @@
-#Prep the dist to metro dataset
+
+# Prep the dist to metro dataset ------------------------------------------
+
+# Load Packages:
 library(terra)
 library(sf)
 library(tidycensus)
-#load Canadian metro
+
+#load Canadian metro data:
 bc.metro <- st_read("Data/original/CNCNSSMTRR_polygon.shp") %>% 
   select(., c(CNSS_MT_ID, CNSS_MTR_M, geometry))
 colnames(bc.metro)[1:2] <- c("GEOID", "NAME")
