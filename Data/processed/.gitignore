@@ -127,3 +127,12 @@ biophysONA
 biosocial_fuzsum.tif
 biosocial_resist.tif
 prob_conflict_bears_ONA.tif
+bioSocialONA
+biophys_ona_cumcurr.tif
+biophys_ona_norm.tif
+biosocial_ona_cumcurr.tif
+biosocial_ona_norm.tif
+config.ini
+cum_currmap.tif
+flow_potential.tif
+normalized_cum_currmap.tif
