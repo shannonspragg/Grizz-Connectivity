@@ -51,10 +51,10 @@ global.int[!is.na(global.int)] <- fixed.effects[[1]]
 
 can.ccs <- st_make_valid(st_read("Data/original/lccs000b16a_e.shp")) %>% 
   filter(., PRNAME == "British Columbia / Colombie-Britannique" | PRNAME == "Alberta") %>% 
-  select(., c(CCSNAME, geometry))
+  dplyr::select(., c(CCSNAME, geometry))
 
 us.counties <- counties(state= c("WA", "ID")) %>% 
-  select(., c(NAME, geometry)) %>% 
+  dplyr::select(., c(NAME, geometry)) %>% 
   rename(CCSNAME = NAME) %>% 
   st_transform(., st_crs(can.ccs))
 
