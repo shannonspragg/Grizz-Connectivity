@@ -8,15 +8,13 @@ library(tidyverse)
 library(raster)
 
 # Data:
-bhs <- rast("Data/processed/bhs_ONA.tif")
+bhs.ona <- rast("Data/processed/bhs_ONA.tif")
 ghm1 <- rast("Data/original/gHMv1_300m_2017_static/gHMv1_300m_2017_static-0000000000-0000000000.tif")
 ghm2 <- rast("Data/original/gHMv1_300m_2017_static/gHMv1_300m_2017_static-0000046592-0000000000.tif")
 
 ona.bound <- st_read("Data/original/ONA_TerritoryBound.shp") %>% 
   st_buffer(., 100000) %>% st_transform(., crs=crs(bhs)) %>% 
   as(., "SpatVector")
-bhs.ona <- crop(bhs, project(ona.bound, bhs))
-writeRaster(bhs.ona, "Data/processed/bhs_ONA_crop.tif")
 
 ghm1.crp <- project(ghm1, bhs.ona)
 ghm2.crp <- project(ghm2, bhs.ona)

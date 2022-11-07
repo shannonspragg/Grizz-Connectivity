@@ -5,13 +5,14 @@
 library(terra)
 library(sf)
 library(tidycensus)
+library(dplyr)
 
 #load Canadian metro data:
 bc.metro <- st_read("Data/original/CNCNSSMTRR_polygon.shp") %>% 
-  select(., c(CNSS_MT_ID, CNSS_MTR_M, geometry))
+  dplyr::select(., c(CNSS_MT_ID, CNSS_MTR_M, geometry))
 colnames(bc.metro)[1:2] <- c("GEOID", "NAME")
 ab.metro <- st_read("Data/original/Alberta_CMACA2016.shp") %>% 
-  select(., c(CMAPUID, CMANAME, geometry)) %>% 
+  dplyr::select(., c(CMAPUID, CMANAME, geometry)) %>% 
   st_transform(., st_crs(bc.metro))
 colnames(ab.metro)[1:2] <- c("GEOID", "NAME")
 can.metro <- rbind(bc.metro, ab.metro)
@@ -21,7 +22,7 @@ wa_metromicro <- get_estimates(geography = "metropolitan statistical area/microp
 
 metro <- wa_metromicro %>% 
   filter(str_detect(NAME, "Metro")) %>% 
-  select(., c(GEOID, NAME, geometry)) %>% 
+  dplyr::select(., c(GEOID, NAME, geometry)) %>% 
   distinct(.) %>% 
   st_transform(., crs=st_crs(can.metro))
 

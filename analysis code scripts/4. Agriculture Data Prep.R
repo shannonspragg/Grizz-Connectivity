@@ -109,7 +109,7 @@ animal.farm.all <- rbind(animal.farm.can.join, animal.farm.us.join)
 crop.farm.all <- rbind(crop.farm.can.join, crop.farm.us.join)
 
 #load template raster
-dist2metkm <- rast("Data/processed/dist2met_km_SOI.tif")
+dist2metkm <- rast("Data/processed/dist2met_km_ONA.tif")
 
 #crop sfs
 animal.farm.vect <- terra::project(vect(animal.farm.all), crs(dist2metkm))

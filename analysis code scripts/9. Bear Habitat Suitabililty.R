@@ -29,4 +29,4 @@ nc.rstr[is.na(nc.rstr)] <- global(bhs.ONA, fun=quantile, probs= 0.5,na.rm=TRUE)[
 nc.rstr.crop <- mask(nc.rstr, bhs.ONA, inverse=TRUE) #get rid of modeled region so we don't overwrite it
 bhs.mos <- mosaic(bhs.ONA, nc.rstr.crop, fun="median") #combine the modeled and US version
 
-writeRaster(bhs.mos, "Data/processed/bhs_ONA.tif")
+writeRaster(bhs.mos, "Data/processed/bhs_ONA.tif", overwrite=TRUE)

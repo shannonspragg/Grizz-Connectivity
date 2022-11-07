@@ -35,11 +35,16 @@ ensure_multipolygons <- function(X) {
   Y <- st_read(tmp2)
   st_sf(st_drop_geometry(X), geom = st_geometry(Y))
 }
-fgdb <- "Data/original/PAD_US2_1.gdb/"
-wa.id.pas <- read_sf(dsn = fgdb, layer = "PADUS2_1Combined_Proclamation_Marine_Fee_Designation_Easement") %>% 
+#fgdb <- "Data/original/PAD_US2_1.gdb/"
+fgdb <- "Data/original/PAD_US3_0.gdb/"
+wa.id.pas <- read_sf(dsn = fgdb, layer = "PADUS3_0Combined_Proclamation_Marine_Fee_Designation_Easement") %>% 
   filter(., State_Nm %in% c("WA", "ID")) %>% 
   filter(., IUCN_Cat == "Ia" | IUCN_Cat == "Ib" | IUCN_Cat == "II" | IUCN_Cat == "IV" )
-public.land.corrected <-  ensure_multipolygons(wa.id.pas)
+
+# wa.id.pas <- read_sf(dsn = fgdb, layer = "PADUS2_1Combined_Proclamation_Marine_Fee_Designation_Easement") %>% 
+#   filter(., State_Nm %in% c("WA", "ID")) %>% 
+#   filter(., IUCN_Cat == "Ia" | IUCN_Cat == "Ib" | IUCN_Cat == "II" | IUCN_Cat == "IV" )
+ public.land.corrected <-  ensure_multipolygons(wa.id.pas)
 
 wa.id.pas.valid <- st_make_valid(public.land.corrected)
 
@@ -62,7 +67,7 @@ pas.all <- rbind(wa.id.pas.join, can.pas.join)
 
 # load template raster and estimate distance ------------------------------
 
-dist2metkm <- rast("Data/processed/dist2met_km_SOI.tif") 
+dist2metkm <- rast("Data/processed/dist2met_km_ONA.tif") 
 pas.vect <- terra::project(vect(pas.all), dist2metkm)
 dist2pa <- terra::distance(dist2metkm, pas.vect)
 dist2pakm <- measurements::conv_unit(dist2pa, "m", "km")
