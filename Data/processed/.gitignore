@@ -114,3 +114,12 @@ ona_griz_inc_crop.tif.aux.xml
 p_conflict_diff_ona.tif
 p_conflict_diff_ona.tif.aux.xml
 bhs_ONA_crop.tif
+animal_crop_dens.tif
+biophys_fuzsum_ona.tif
+biophys_resist_ona.tif
+crop_crop_dens.tif
+dist2grizz_km_ONA.tif
+dist2met_km_ONA.tif
+dist2pa_km_ONA.tif
+hudens_ONA.tif
+prob_conflict_all_ONA.tif
