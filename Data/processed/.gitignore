@@ -136,3 +136,7 @@ config.ini
 cum_currmap.tif
 flow_potential.tif
 normalized_cum_currmap.tif
+biophys_ona_cumcurr.tif.aux.xml
+biophys_ona_norm.tif.aux.xml
+biosocial_ona_cumcurr.tif.aux.xml
+biosocial_ona_norm.tif.aux.xml
